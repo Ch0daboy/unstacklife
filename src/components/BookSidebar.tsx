@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Book, BookOpen, Plus, Trash2, Clock, CheckCircle2, Play } from 'lucide-react';
 import { Book as BookType } from '../types';
 import { loadAllBooks, deleteBook } from '../services/bookService';
+import { loadBook } from '../services/bookService';
 
 interface BookSidebarProps {
   isOpen: boolean;
@@ -49,6 +50,18 @@ const BookSidebar: React.FC<BookSidebarProps> = ({
     }
   };
 
+  const handleSelectBook = async (book: BookType) => {
+    try {
+      // Load full book details including chapters
+      const fullBook = await loadBook(book.id);
+      if (fullBook) {
+        onSelectBook(fullBook);
+      }
+    } catch (error) {
+      console.error('Error loading book:', error);
+      onSelectBook(book); // Fallback to basic book data
+    }
+  };
   const getStatusIcon = (book: BookType) => {
     const completedChapters = book.chapters.filter(ch => ch.status === 'completed').length;
     const totalChapters = book.chapters.length;
@@ -123,7 +136,7 @@ const BookSidebar: React.FC<BookSidebarProps> = ({
                 {books.map((book) => (
                   <div
                     key={book.id}
-                    onClick={() => onSelectBook(book)}
+                    onClick={() => handleSelectBook(book)}
                     className={`
                       p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md group
                       ${currentBookId === book.id 

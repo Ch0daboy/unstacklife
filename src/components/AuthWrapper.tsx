@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { User, LogIn, Mail, Lock, Eye, EyeOff, Chrome } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { User as SupabaseUser } from '@supabase/supabase-js';
+import { User, LogIn, Mail, Lock, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { createUser, authenticateUser } from '../lib/database';
+import { getCurrentUser, setCurrentUser, clearCurrentUser } from '../lib/auth';
+import { User as UserType } from '../lib/auth';
 
 interface AuthWrapperProps {
   children: React.ReactNode;
 }
 
 const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -17,19 +18,10 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    // Check for existing user session
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    setLoading(false);
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -38,18 +30,27 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
 
     try {
       if (authMode === 'signup') {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        alert('Check your email for the confirmation link!');
+        // Check if user already exists
+        try {
+          const existingUser = authenticateUser(email, password);
+          if (existingUser) {
+            throw new Error('User with this email already exists');
+          }
+        } catch (error) {
+          // If authentication fails, it means user doesn't exist, which is good for signup
+        }
+        
+        const newUser = createUser(email, password);
+        setCurrentUser(newUser);
+        setUser(newUser);
+        alert('Account created successfully!');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
+        const authenticatedUser = authenticateUser(email, password);
+        if (!authenticatedUser) {
+          throw new Error('Invalid email or password');
+        }
+        setCurrentUser(authenticatedUser);
+        setUser(authenticatedUser);
       }
     } catch (error: any) {
       alert(error.message);
@@ -58,24 +59,11 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     }
   };
 
-  const handleGoogleAuth = async () => {
-    setAuthLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      alert(error.message);
-      setAuthLoading(false);
-    }
-  };
-
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    clearCurrentUser();
+    setUser(null);
+    setEmail('');
+    setPassword('');
   };
 
   if (loading) {
@@ -156,38 +144,12 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <LogIn className="w-5 h-5" />
+                  {authMode === 'signin' ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
                   {authMode === 'signin' ? 'Sign In' : 'Sign Up'}
                 </>
               )}
             </button>
           </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <button
-              onClick={handleGoogleAuth}
-              disabled={authLoading}
-              className="mt-4 w-full bg-white border border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              {authLoading ? (
-                <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <>
-                  <Chrome className="w-5 h-5" />
-                  Continue with Google
-                </>
-              )}
-            </button>
-          </div>
 
           <div className="mt-6 text-center">
             <button
