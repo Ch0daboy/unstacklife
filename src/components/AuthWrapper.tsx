@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, LogIn, Mail, Lock, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { createUser, authenticateUser } from '../lib/database';
-import { getCurrentUser, setCurrentUser, clearCurrentUser } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 import { User as UserType } from '../lib/auth';
 
 interface AuthWrapperProps {
@@ -18,11 +18,23 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
-    // Check for existing user session
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ? { id: session.user.id, email: session.user.email || '' } : null);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user ? { id: user.id, email: user.email || '' } : null);
+    setLoading(false);
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +72,7 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   };
 
   const handleSignOut = async () => {
-    clearCurrentUser();
+    await supabase.auth.signOut();
     setUser(null);
     setEmail('');
     setPassword('');
