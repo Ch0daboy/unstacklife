@@ -17,6 +17,7 @@ interface DatabaseBook {
   heat_level: string | null;
   perspective: string | null;
   target_audience: string | null;
+  cover_url: string | null;
   status: string;
   created_at: string;
   updated_at: string;
@@ -138,6 +139,7 @@ export const saveBook = (book: any, userId: string) => {
     heat_level: book.heatLevel,
     perspective: book.perspective,
     target_audience: book.targetAudience,
+    cover_url: book.coverUrl,
     status: book.status,
     created_at: existingBookIndex >= 0 ? books[existingBookIndex].created_at : now,
     updated_at: now
@@ -244,6 +246,7 @@ export const loadBook = (bookId: string, userId: string) => {
     heatLevel: book.heat_level,
     perspective: book.perspective,
     targetAudience: book.target_audience,
+    coverUrl: book.cover_url,
     status: book.status,
     chapters: chaptersWithSubChapters
   };
@@ -266,6 +269,7 @@ export const loadAllBooks = (userId: string) => {
     heatLevel: book.heat_level,
     perspective: book.perspective,
     targetAudience: book.target_audience,
+    coverUrl: book.cover_url,
     status: book.status,
     chapters: [] // Will be loaded separately when needed
   }));

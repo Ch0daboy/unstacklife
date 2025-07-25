@@ -24,6 +24,7 @@ export interface Book {
   tone: string;
   heatLevel?: string;
   perspective?: string;
+  coverUrl?: string;
   chapters: BookChapter[];
   status: 'draft' | 'generating' | 'completed';
 }

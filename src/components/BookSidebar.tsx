@@ -149,6 +149,13 @@ const BookSidebar: React.FC<BookSidebarProps> = ({
                       <h3 className="font-medium text-gray-800 text-sm line-clamp-2 flex-1 mr-2">
                         {book.title}
                       </h3>
+                      {book.coverUrl && (
+                        <img 
+                          src={book.coverUrl} 
+                          alt={`${book.title} cover`}
+                          className="w-8 h-12 object-cover rounded-sm mr-2 flex-shrink-0"
+                        />
+                      )}
                       <button
                         onClick={(e) => handleDeleteBook(book.id, e)}
                         className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all duration-200"
