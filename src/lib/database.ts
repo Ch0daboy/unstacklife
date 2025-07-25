@@ -1,168 +1,238 @@
-import Database from 'better-sqlite3';
-import { v4 as uuidv4 } from 'uuid';
+// Browser-compatible local storage database implementation
+interface User {
+  id: string;
+  email: string;
+  password: string;
+  created_at: string;
+}
 
-// Initialize SQLite database
-const db = new Database(':memory:'); // Use in-memory database for demo
+interface DatabaseBook {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  genre: string | null;
+  sub_genre: string | null;
+  tone: string | null;
+  heat_level: string | null;
+  perspective: string | null;
+  target_audience: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
 
-// Create tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+interface DatabaseChapter {
+  id: string;
+  book_id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
 
-  CREATE TABLE IF NOT EXISTS books (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    genre TEXT,
-    sub_genre TEXT,
-    tone TEXT,
-    heat_level TEXT,
-    perspective TEXT,
-    target_audience TEXT,
-    status TEXT DEFAULT 'draft',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
+interface DatabaseSubChapter {
+  id: string;
+  chapter_id: string;
+  title: string;
+  description: string | null;
+  content: string | null;
+  status: string;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
 
-  CREATE TABLE IF NOT EXISTS chapters (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    status TEXT DEFAULT 'pending',
-    order_index INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
-  );
+// Generate UUID v4
+const generateUUID = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
-  CREATE TABLE IF NOT EXISTS sub_chapters (
-    id TEXT PRIMARY KEY,
-    chapter_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    content TEXT,
-    status TEXT DEFAULT 'pending',
-    order_index INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE
-  );
+// Storage keys
+const STORAGE_KEYS = {
+  USERS: 'book_app_users',
+  BOOKS: 'book_app_books',
+  CHAPTERS: 'book_app_chapters',
+  SUB_CHAPTERS: 'book_app_sub_chapters'
+};
 
-  CREATE INDEX IF NOT EXISTS idx_books_user_id ON books(user_id);
-  CREATE INDEX IF NOT EXISTS idx_books_created_at ON books(created_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_chapters_book_id ON chapters(book_id);
-  CREATE INDEX IF NOT EXISTS idx_chapters_order ON chapters(book_id, order_index);
-  CREATE INDEX IF NOT EXISTS idx_sub_chapters_chapter_id ON sub_chapters(chapter_id);
-  CREATE INDEX IF NOT EXISTS idx_sub_chapters_order ON sub_chapters(chapter_id, order_index);
-`);
+// Helper functions for localStorage operations
+const getFromStorage = <T>(key: string): T[] => {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveToStorage = <T>(key: string, data: T[]): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error('Failed to save to localStorage:', error);
+  }
+};
 
 // User management
 export const createUser = (email: string, password: string) => {
-  const id = uuidv4();
+  const users = getFromStorage<User>(STORAGE_KEYS.USERS);
+  
+  // Check if user already exists
+  if (users.find(u => u.email === email)) {
+    throw new Error('User with this email already exists');
+  }
+  
+  const id = generateUUID();
   const hashedPassword = btoa(password); // Simple base64 encoding (not secure for production)
   
-  const stmt = db.prepare('INSERT INTO users (id, email, password) VALUES (?, ?, ?)');
-  stmt.run(id, email, hashedPassword);
+  const newUser: User = {
+    id,
+    email,
+    password: hashedPassword,
+    created_at: new Date().toISOString()
+  };
+  
+  users.push(newUser);
+  saveToStorage(STORAGE_KEYS.USERS, users);
   
   return { id, email };
 };
 
 export const authenticateUser = (email: string, password: string) => {
+  const users = getFromStorage<User>(STORAGE_KEYS.USERS);
   const hashedPassword = btoa(password);
-  const stmt = db.prepare('SELECT id, email FROM users WHERE email = ? AND password = ?');
-  return stmt.get(email, hashedPassword) as { id: string; email: string } | undefined;
+  
+  const user = users.find(u => u.email === email && u.password === hashedPassword);
+  return user ? { id: user.id, email: user.email } : undefined;
 };
 
 export const getUserById = (id: string) => {
-  const stmt = db.prepare('SELECT id, email FROM users WHERE id = ?');
-  return stmt.get(id) as { id: string; email: string } | undefined;
+  const users = getFromStorage<User>(STORAGE_KEYS.USERS);
+  const user = users.find(u => u.id === id);
+  return user ? { id: user.id, email: user.email } : undefined;
 };
 
 // Book management
 export const saveBook = (book: any, userId: string) => {
-  const bookStmt = db.prepare(`
-    INSERT OR REPLACE INTO books 
-    (id, user_id, title, description, genre, sub_genre, tone, heat_level, perspective, target_audience, status, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-  `);
+  const now = new Date().toISOString();
   
-  bookStmt.run(
-    book.id,
-    userId,
-    book.title,
-    book.description,
-    book.genre,
-    book.subGenre,
-    book.tone,
-    book.heatLevel,
-    book.perspective,
-    book.targetAudience,
-    book.status
-  );
+  // Save book
+  const books = getFromStorage<DatabaseBook>(STORAGE_KEYS.BOOKS);
+  const existingBookIndex = books.findIndex(b => b.id === book.id);
+  
+  const dbBook: DatabaseBook = {
+    id: book.id,
+    user_id: userId,
+    title: book.title,
+    description: book.description,
+    genre: book.genre,
+    sub_genre: book.subGenre,
+    tone: book.tone,
+    heat_level: book.heatLevel,
+    perspective: book.perspective,
+    target_audience: book.targetAudience,
+    status: book.status,
+    created_at: existingBookIndex >= 0 ? books[existingBookIndex].created_at : now,
+    updated_at: now
+  };
+  
+  if (existingBookIndex >= 0) {
+    books[existingBookIndex] = dbBook;
+  } else {
+    books.push(dbBook);
+  }
+  saveToStorage(STORAGE_KEYS.BOOKS, books);
 
   // Save chapters
   if (book.chapters) {
-    const chapterStmt = db.prepare(`
-      INSERT OR REPLACE INTO chapters 
-      (id, book_id, title, description, status, order_index, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-    `);
-
-    const subChapterStmt = db.prepare(`
-      INSERT OR REPLACE INTO sub_chapters 
-      (id, chapter_id, title, description, content, status, order_index, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-    `);
+    const chapters = getFromStorage<DatabaseChapter>(STORAGE_KEYS.CHAPTERS);
+    const subChapters = getFromStorage<DatabaseSubChapter>(STORAGE_KEYS.SUB_CHAPTERS);
+    
+    // Remove existing chapters for this book
+    const filteredChapters = chapters.filter(c => c.book_id !== book.id);
+    const filteredSubChapters = subChapters.filter(sc => {
+      const chapter = chapters.find(c => c.id === sc.chapter_id);
+      return !chapter || chapter.book_id !== book.id;
+    });
 
     book.chapters.forEach((chapter: any, chapterIndex: number) => {
-      chapterStmt.run(
-        chapter.id,
-        book.id,
-        chapter.title,
-        chapter.description,
-        chapter.status,
-        chapterIndex
-      );
+      const dbChapter: DatabaseChapter = {
+        id: chapter.id,
+        book_id: book.id,
+        title: chapter.title,
+        description: chapter.description,
+        status: chapter.status,
+        order_index: chapterIndex,
+        created_at: now,
+        updated_at: now
+      };
+      filteredChapters.push(dbChapter);
 
       if (chapter.subChapters) {
         chapter.subChapters.forEach((subChapter: any, subIndex: number) => {
-          subChapterStmt.run(
-            subChapter.id,
-            chapter.id,
-            subChapter.title,
-            subChapter.description,
-            subChapter.content,
-            subChapter.status,
-            subIndex
-          );
+          const dbSubChapter: DatabaseSubChapter = {
+            id: subChapter.id,
+            chapter_id: chapter.id,
+            title: subChapter.title,
+            description: subChapter.description,
+            content: subChapter.content,
+            status: subChapter.status,
+            order_index: subIndex,
+            created_at: now,
+            updated_at: now
+          };
+          filteredSubChapters.push(dbSubChapter);
         });
       }
     });
+
+    saveToStorage(STORAGE_KEYS.CHAPTERS, filteredChapters);
+    saveToStorage(STORAGE_KEYS.SUB_CHAPTERS, filteredSubChapters);
   }
 
   return book;
 };
 
 export const loadBook = (bookId: string, userId: string) => {
-  const bookStmt = db.prepare('SELECT * FROM books WHERE id = ? AND user_id = ?');
-  const book = bookStmt.get(bookId, userId) as any;
+  const books = getFromStorage<DatabaseBook>(STORAGE_KEYS.BOOKS);
+  const book = books.find(b => b.id === bookId && b.user_id === userId);
   
   if (!book) return null;
 
-  const chaptersStmt = db.prepare('SELECT * FROM chapters WHERE book_id = ? ORDER BY order_index');
-  const chapters = chaptersStmt.all(bookId) as any[];
+  const chapters = getFromStorage<DatabaseChapter>(STORAGE_KEYS.CHAPTERS);
+  const subChapters = getFromStorage<DatabaseSubChapter>(STORAGE_KEYS.SUB_CHAPTERS);
+  
+  const bookChapters = chapters
+    .filter(c => c.book_id === bookId)
+    .sort((a, b) => a.order_index - b.order_index);
 
-  for (const chapter of chapters) {
-    const subChaptersStmt = db.prepare('SELECT * FROM sub_chapters WHERE chapter_id = ? ORDER BY order_index');
-    chapter.subChapters = subChaptersStmt.all(chapter.id) as any[];
-  }
+  const chaptersWithSubChapters = bookChapters.map(chapter => {
+    const chapterSubChapters = subChapters
+      .filter(sc => sc.chapter_id === chapter.id)
+      .sort((a, b) => a.order_index - b.order_index);
+    
+    return {
+      id: chapter.id,
+      title: chapter.title,
+      description: chapter.description,
+      status: chapter.status,
+      expanded: false,
+      subChapters: chapterSubChapters.map(subChapter => ({
+        id: subChapter.id,
+        title: subChapter.title,
+        description: subChapter.description,
+        content: subChapter.content,
+        status: subChapter.status
+      }))
+    };
+  });
 
   return {
     id: book.id,
@@ -175,34 +245,18 @@ export const loadBook = (bookId: string, userId: string) => {
     perspective: book.perspective,
     targetAudience: book.target_audience,
     status: book.status,
-    chapters: chapters.map(chapter => ({
-      id: chapter.id,
-      title: chapter.title,
-      description: chapter.description,
-      status: chapter.status,
-      expanded: false,
-      subChapters: chapter.subChapters?.map((subChapter: any) => ({
-        id: subChapter.id,
-        title: subChapter.title,
-        description: subChapter.description,
-        content: subChapter.content,
-        status: subChapter.status
-      }))
-    }))
+    chapters: chaptersWithSubChapters
   };
 };
 
 export const loadAllBooks = (userId: string) => {
-  const stmt = db.prepare(`
-    SELECT id, title, description, genre, sub_genre, tone, heat_level, perspective, target_audience, status, created_at
-    FROM books 
-    WHERE user_id = ? 
-    ORDER BY updated_at DESC
-  `);
+  const books = getFromStorage<DatabaseBook>(STORAGE_KEYS.BOOKS);
   
-  const books = stmt.all(userId) as any[];
+  const userBooks = books
+    .filter(b => b.user_id === userId)
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   
-  return books.map(book => ({
+  return userBooks.map(book => ({
     id: book.id,
     title: book.title,
     description: book.description,
@@ -218,8 +272,21 @@ export const loadAllBooks = (userId: string) => {
 };
 
 export const deleteBook = (bookId: string, userId: string) => {
-  const stmt = db.prepare('DELETE FROM books WHERE id = ? AND user_id = ?');
-  stmt.run(bookId, userId);
+  // Remove book
+  const books = getFromStorage<DatabaseBook>(STORAGE_KEYS.BOOKS);
+  const filteredBooks = books.filter(b => !(b.id === bookId && b.user_id === userId));
+  saveToStorage(STORAGE_KEYS.BOOKS, filteredBooks);
+  
+  // Remove chapters
+  const chapters = getFromStorage<DatabaseChapter>(STORAGE_KEYS.CHAPTERS);
+  const bookChapterIds = chapters.filter(c => c.book_id === bookId).map(c => c.id);
+  const filteredChapters = chapters.filter(c => c.book_id !== bookId);
+  saveToStorage(STORAGE_KEYS.CHAPTERS, filteredChapters);
+  
+  // Remove sub-chapters
+  const subChapters = getFromStorage<DatabaseSubChapter>(STORAGE_KEYS.SUB_CHAPTERS);
+  const filteredSubChapters = subChapters.filter(sc => !bookChapterIds.includes(sc.chapter_id));
+  saveToStorage(STORAGE_KEYS.SUB_CHAPTERS, filteredSubChapters);
 };
 
-export default db;
+export default null; // No database instance needed for localStorage implementation
