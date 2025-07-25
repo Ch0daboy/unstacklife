@@ -46,7 +46,7 @@ export const generateBookCover = async (book: Book, geminiApiKey: string): Promi
       config: {
         numberOfImages: 1,
         outputMimeType: 'image/jpeg',
-        aspectRatio: '2:3', // Book cover aspect ratio
+        aspectRatio: '9:16', // Supported vertical aspect ratio
       },
     });
 
