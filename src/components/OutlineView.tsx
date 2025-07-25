@@ -105,13 +105,17 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   };
 
   const handleGenerateCover = async (useDALLE: boolean = false) => {
-    // For demo purposes, we'll use a placeholder API key prompt
-    // In a real app, you'd have this configured in environment variables or user settings
-    const apiKey = useDALLE 
-      ? prompt('Enter your OpenAI API key for DALL-E:') 
-      : prompt('Enter your Hugging Face API key:');
+    let apiKey: string;
     
-    if (!apiKey) return;
+    if (useDALLE) {
+      // For DALL-E, we still need OpenAI API key
+      const userApiKey = prompt('Enter your OpenAI API key for DALL-E:');
+      if (!userApiKey) return;
+      apiKey = userApiKey;
+    } else {
+      // For Gemini Imagen, use the existing Gemini API key
+      apiKey = apiKeys.gemini;
+    }
     
     setIsGeneratingCover(true);
     try {
@@ -223,10 +227,10 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                     <button
                       onClick={() => handleGenerateCover(false)}
                       disabled={isGeneratingCover}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                      className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                     >
                       <Image className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'Hugging Face'}
+                      {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
                     </button>
                     <button
                       onClick={() => handleGenerateCover(true)}
@@ -289,10 +293,10 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                     <button
                       onClick={() => handleGenerateCover(false)}
                       disabled={isGeneratingCover}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                      className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                     >
                       <Image className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'Hugging Face'}
+                      {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
                     </button>
                     <button
                       onClick={() => handleGenerateCover(true)}
