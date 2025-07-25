@@ -131,4 +131,4 @@ export const generateBookCoverWithDALLE = async (book: Book, apiKey: string): Pr
     console.error('Error generating book cover with DALL-E:', error);
     throw error;
   }
-};</parameter>
+};
