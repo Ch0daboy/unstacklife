@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.11.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/uuid": "^10.0.0",
     "file-saver": "^2.0.5",
