@@ -39,16 +39,22 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
-        if (error.message !== 'Auth session missing!') {
-          console.error('Error checking user:', error);
-        }
+        console.error('Supabase auth error:', error);
         setUser(null);
       } else {
         setUser(user ? { id: user.id, email: user.email || '' } : null);
       }
     } catch (error) {
-      if (error instanceof Error && error.message !== 'Auth session missing!') {
-        console.error('Failed to check user:', error);
+      console.error('Failed to check user authentication:', error);
+      
+      // Provide helpful error message for common issues
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          console.error('Network error: Unable to connect to Supabase. Please check:');
+          console.error('1. Your internet connection');
+          console.error('2. VITE_SUPABASE_URL in your .env file');
+          console.error('3. VITE_SUPABASE_ANON_KEY in your .env file');
+        }
       }
       setUser(null);
     } finally {
