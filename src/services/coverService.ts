@@ -3,7 +3,7 @@ import { GoogleGenAI } from '@google/genai';
 
 export const generateBookCover = async (book: Book, geminiApiKey: string): Promise<string> => {
   // Create a detailed prompt based on book information
-  let prompt = `Professional book cover design for "${book.title}", ${book.genre.toLowerCase()} genre`;
+  let prompt = `Professional book cover design for "${book.title}" by ${book.author || 'Author Name'}, ${book.genre.toLowerCase()} genre`;
   
   if (book.subGenre) {
     prompt += `, ${book.subGenre.toLowerCase()} style`;
@@ -33,7 +33,7 @@ export const generateBookCover = async (book: Book, geminiApiKey: string): Promi
     prompt += `, ${genrePrompts[book.genre.toLowerCase()]}`;
   }
   
-  prompt += ', high quality, professional book cover design, clean typography, marketable design, 4k resolution';
+  prompt += `, high quality, professional book cover design, clean typography with author name "${book.author || 'Author Name'}" clearly visible, marketable design, 4k resolution`;
   
   try {
     const ai = new GoogleGenAI({
@@ -69,7 +69,7 @@ export const generateBookCover = async (book: Book, geminiApiKey: string): Promi
 
 // Alternative: Generate cover using DALL-E (if user has OpenAI API key)
 export const generateBookCoverWithDALLE = async (book: Book, apiKey: string): Promise<string> => {
-  let prompt = `A professional book cover design for "${book.title}", a ${book.genre.toLowerCase()} book`;
+  let prompt = `A professional book cover design for "${book.title}" by ${book.author || 'Author Name'}, a ${book.genre.toLowerCase()} book`;
   
   if (book.description) {
     // Take first sentence of description for context
@@ -77,7 +77,7 @@ export const generateBookCoverWithDALLE = async (book: Book, apiKey: string): Pr
     prompt += `. ${firstSentence}`;
   }
   
-  prompt += '. Professional book cover design, high quality, marketable, clean typography.';
+  prompt += `. Professional book cover design, high quality, marketable, clean typography with author name "${book.author || 'Author Name'}" clearly visible.`;
   
   try {
     const response = await fetch('https://api.openai.com/v1/images/generations', {

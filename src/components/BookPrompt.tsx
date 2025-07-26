@@ -58,6 +58,7 @@ const HEAT_LEVELS = [
 
 const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => {
   const [prompt, setPrompt] = useState('');
+  const [author, setAuthor] = useState('');
   const [genre, setGenre] = useState('');
   const [subGenre, setSubGenre] = useState('');
   const [tone, setTone] = useState('');
@@ -210,7 +211,7 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
 
     setIsGenerating(true);
     try {
-      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, apiKeys.gemini);
+      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, apiKeys.gemini);
       onBookGenerated(book);
     } catch (error) {
       console.error('Error generating book outline:', error);
@@ -271,6 +272,20 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-2">
+                Author Name
+              </label>
+              <input
+                type="text"
+                id="author"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                placeholder="Enter author name..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+
             <div>
               <label htmlFor="genre" className="block text-sm font-medium text-gray-700 mb-2">
                 Genre

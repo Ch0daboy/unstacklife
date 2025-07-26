@@ -131,6 +131,7 @@ export const generateBookOutline = async (
   targetAudience: string, 
   heatLevel: string,
   perspective: string,
+  author: string,
   apiKey: string
 ): Promise<Book> => {
   let heatLevelPrompt = '';
@@ -217,6 +218,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
     return {
       id: uuidv4(),
       title: bookData.title,
+      author: author || 'Unknown Author',
       description: bookData.description,
       genre: bookData.genre,
       subGenre: bookData.subGenre,
