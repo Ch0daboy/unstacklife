@@ -25,7 +25,35 @@ export interface Book {
   tone: string;
   heatLevel?: string;
   perspective?: string;
+  targetAudience?: string;
   coverUrl?: string;
   chapters: BookChapter[];
   status: 'draft' | 'generating' | 'completed';
+  audiobook?: AudiobookData;
+}
+
+export interface AudiobookData {
+  id: string;
+  selectedVoice?: string;
+  audioChapters: AudioChapter[];
+  totalDuration?: number;
+  generatedAt: string;
+  status: 'pending' | 'generating' | 'completed' | 'error';
+}
+
+export interface AudioChapter {
+  id: string;
+  chapterId: string;
+  title: string;
+  audioBlob?: Blob;
+  audioUrl?: string;
+  duration?: number;
+  status: 'pending' | 'generating' | 'completed' | 'error';
+}
+
+export interface VoiceOption {
+  voice: SpeechSynthesisVoice;
+  gender: 'male' | 'female' | 'neutral';
+  language: string;
+  isRecommended?: boolean;
 }
