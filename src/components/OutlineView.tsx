@@ -208,15 +208,130 @@ const OutlineView: React.FC<OutlineViewProps> = ({
         </div>
 
         {/* Action Buttons */}
-        {!isBookCompleted ? (
+        {isBookCompleted ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-3 px-6 rounded-xl">
+              <FileText className="w-5 h-5" />
+              <span className="font-medium">Book completed! Ready for export.</span>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => window.location.hash = `#edit/${book.id}`}
+                className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-medium hover:from-orange-700 hover:to-red-700 transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <Edit3 className="w-5 h-5" />
+                Edit Book
+              </button>
+              
+              {/* Cover Generation */}
+              <div className="space-y-3">
+                {!showCoverOptions ? (
+                  <button
+                    onClick={() => setShowCoverOptions(true)}
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Palette className="w-5 h-5" />
+                    {book.coverUrl ? 'Regenerate Cover' : 'Generate Cover'}
+                  </button>
+                ) : (
+                  <div className="bg-purple-50 p-4 rounded-xl space-y-3">
+                    <h4 className="font-medium text-purple-900">Choose Cover Generation Service</h4>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleGenerateCover(false)}
+                        disabled={isGeneratingCover}
+                        className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                      >
+                        <Image className="w-4 h-4" />
+                        {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
+                      </button>
+                      <button
+                        onClick={() => handleGenerateCover(true)}
+                        disabled={isGeneratingCover}
+                        className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                      >
+                        <Palette className="w-4 h-4" />
+                        {isGeneratingCover ? 'Generating...' : 'DALL-E'}
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => setShowCoverOptions(false)}
+                      className="w-full px-4 py-2 text-purple-600 hover:text-purple-800 transition-colors duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {isRomanceBook && (
+                <div className="space-y-3">
+                  {!showHeatLevelSelector ? (
+                    <button
+                      onClick={() => setShowHeatLevelSelector(true)}
+                      className="w-full bg-gradient-to-r from-pink-600 to-rose-600 text-white py-3 px-6 rounded-xl font-medium hover:from-pink-700 hover:to-rose-700 transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Heart className="w-5 h-5" />
+                      Create Version with Different Heat Level
+                    </button>
+                  ) : (
+                    <div className="bg-pink-50 p-4 rounded-xl space-y-3">
+                      <h4 className="font-medium text-pink-900">Convert to Different Heat Level</h4>
+                      <select
+                        value={selectedNewHeatLevel}
+                        onChange={(e) => setSelectedNewHeatLevel(e.target.value)}
+                        className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                      >
+                        <option value="">Select new heat level...</option>
+                        {HEAT_LEVELS.filter(level => level.value !== book.heatLevel).map((level) => (
+                          <option key={level.value} value={level.value}>
+                            {level.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleConvertHeatLevel}
+                          disabled={!selectedNewHeatLevel || isConverting}
+                          className="flex-1 bg-gradient-to-r from-pink-600 to-rose-600 text-white py-2 px-4 rounded-lg font-medium hover:from-pink-700 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          {isConverting ? 'Converting...' : 'Convert'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowHeatLevelSelector(false);
+                            setSelectedNewHeatLevel('');
+                          }}
+                          className="px-4 py-2 text-pink-600 hover:text-pink-800 transition-colors duration-200"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button
+                onClick={() => handleExport('pdf')}
+                disabled={isExporting}
+                className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-medium hover:from-red-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <Download className="w-5 h-5" />
+                {isExporting ? 'Exporting...' : 'Export as PDF'}
+              </button>
+              <button
+                onClick={() => handleExport('epub')}
+                disabled={isExporting}
+                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <Download className="w-5 h-5" />
+                {isExporting ? 'Exporting...' : 'Export as EPUB'}
+              </button>
+            </div>
+          </div>
+        ) : (
           <div className="flex gap-3">
-            <button
-              onClick={() => window.location.hash = `#edit/${book.id}`}
-              className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-medium hover:from-orange-700 hover:to-red-700 transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              <Edit3 className="w-5 h-5" />
-              Edit Book
-            </button>
             {/* Cover Generation */}
             <div className="space-y-3">
               {!showCoverOptions ? (
@@ -259,6 +374,14 @@ const OutlineView: React.FC<OutlineViewProps> = ({
             </div>
             
             <button
+              onClick={() => window.location.hash = `#edit/${book.id}`}
+              className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-medium hover:from-orange-700 hover:to-red-700 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Edit3 className="w-5 h-5" />
+              Edit Book
+            </button>
+            
+            <button
               onClick={() => handleGenerateAll(false)}
               disabled={isGeneratingAll}
               className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
@@ -274,121 +397,6 @@ const OutlineView: React.FC<OutlineViewProps> = ({
               <Search className="w-5 h-5" />
               {isGeneratingAll ? 'Researching...' : 'Research & Generate All'}
             </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-3 px-6 rounded-xl">
-              <FileText className="w-5 h-5" />
-              <span className="font-medium">Book completed! Ready for export.</span>
-            </div>
-            <div className="flex gap-3">
-            {/* Romance Heat Level Conversion */}
-            {/* Cover Generation */}
-            <div className="space-y-3">
-              {!showCoverOptions ? (
-                <button
-                  onClick={() => setShowCoverOptions(true)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <Palette className="w-5 h-5" />
-                  {book.coverUrl ? 'Regenerate Cover' : 'Generate Cover'}
-                </button>
-              ) : (
-                <div className="bg-purple-50 p-4 rounded-xl space-y-3">
-                  <h4 className="font-medium text-purple-900">Choose Cover Generation Service</h4>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleGenerateCover(false)}
-                      disabled={isGeneratingCover}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                    >
-                      <Image className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
-                    </button>
-                    <button
-                      onClick={() => handleGenerateCover(true)}
-                      disabled={isGeneratingCover}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                    >
-                      <Palette className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'DALL-E'}
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => setShowCoverOptions(false)}
-                    className="w-full px-4 py-2 text-purple-600 hover:text-purple-800 transition-colors duration-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            {isRomanceBook && (
-              <div className="space-y-3">
-                {!showHeatLevelSelector ? (
-                  <button
-                    onClick={() => setShowHeatLevelSelector(true)}
-                    className="w-full bg-gradient-to-r from-pink-600 to-rose-600 text-white py-3 px-6 rounded-xl font-medium hover:from-pink-700 hover:to-rose-700 transition-all duration-200 flex items-center justify-center gap-2"
-                  >
-                    <Heart className="w-5 h-5" />
-                    Create Version with Different Heat Level
-                  </button>
-                ) : (
-                  <div className="bg-pink-50 p-4 rounded-xl space-y-3">
-                    <h4 className="font-medium text-pink-900">Convert to Different Heat Level</h4>
-                    <select
-                      value={selectedNewHeatLevel}
-                      onChange={(e) => setSelectedNewHeatLevel(e.target.value)}
-                      className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                    >
-                      <option value="">Select new heat level...</option>
-                      {HEAT_LEVELS.filter(level => level.value !== book.heatLevel).map((level) => (
-                        <option key={level.value} value={level.value}>
-                          {level.label}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleConvertHeatLevel}
-                        disabled={!selectedNewHeatLevel || isConverting}
-                        className="flex-1 bg-gradient-to-r from-pink-600 to-rose-600 text-white py-2 px-4 rounded-lg font-medium hover:from-pink-700 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                      >
-                        {isConverting ? 'Converting...' : 'Convert'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowHeatLevelSelector(false);
-                          setSelectedNewHeatLevel('');
-                        }}
-                        className="px-4 py-2 text-pink-600 hover:text-pink-800 transition-colors duration-200"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-              <button
-                onClick={() => handleExport('pdf')}
-                disabled={isExporting}
-                className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 px-6 rounded-xl font-medium hover:from-red-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                <Download className="w-5 h-5" />
-                {isExporting ? 'Exporting...' : 'Export as PDF'}
-              </button>
-              <button
-                onClick={() => handleExport('epub')}
-                disabled={isExporting}
-                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                <Download className="w-5 h-5" />
-                {isExporting ? 'Exporting...' : 'Export as EPUB'}
-              </button>
-            </div>
           </div>
         )}
       </div>
