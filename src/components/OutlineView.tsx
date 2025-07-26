@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette } from 'lucide-react';
+import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3 } from 'lucide-react';
 import { Book, BookChapter } from '../types';
 import { generateAllContent, generateAllContentWithResearch, convertRomanceHeatLevel } from '../services/contentService';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
@@ -210,6 +210,13 @@ const OutlineView: React.FC<OutlineViewProps> = ({
         {/* Action Buttons */}
         {!isBookCompleted ? (
           <div className="flex gap-3">
+            <button
+              onClick={() => window.location.hash = `#edit/${book.id}`}
+              className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-medium hover:from-orange-700 hover:to-red-700 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Edit3 className="w-5 h-5" />
+              Edit Book
+            </button>
             {/* Cover Generation */}
             <div className="space-y-3">
               {!showCoverOptions ? (
