@@ -29,9 +29,6 @@ export const saveBook = async (book: Book): Promise<Book> => {
 
   if (bookError) throw bookError;
 
-  // Delete existing chapters and sub-chapters
-  await supabase.from('chapters').delete().eq('book_id', book.id);
-
   // Save chapters
   if (book.chapters && book.chapters.length > 0) {
     const chaptersToInsert = book.chapters.map((chapter, index) => ({
@@ -45,7 +42,7 @@ export const saveBook = async (book: Book): Promise<Book> => {
 
     const { error: chaptersError } = await supabase
       .from('chapters')
-      .insert(chaptersToInsert);
+      .upsert(chaptersToInsert);
 
     if (chaptersError) throw chaptersError;
 
@@ -70,7 +67,7 @@ export const saveBook = async (book: Book): Promise<Book> => {
     if (subChaptersToInsert.length > 0) {
       const { error: subChaptersError } = await supabase
         .from('sub_chapters')
-        .insert(subChaptersToInsert);
+        .upsert(subChaptersToInsert);
 
       if (subChaptersError) throw subChaptersError;
     }
