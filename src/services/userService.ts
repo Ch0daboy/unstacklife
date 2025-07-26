@@ -34,9 +34,11 @@ export const createUserProfile = async (): Promise<UserProfile> => {
 
   const { data, error } = await supabase
     .from('user_profiles')
-    .insert({
+    .upsert({
       id: user.id,
       default_author_name: ''
+    }, {
+      onConflict: 'id'
     })
     .select()
     .single();
