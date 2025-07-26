@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BookOpen, Sparkles, Wand2 } from 'lucide-react';
 import { generateBookOutline } from '../services/geminiService';
 import { Book } from '../types';
+import { getUserProfile } from '../services/userService';
 
 interface BookPromptProps {
   onBookGenerated: (book: Book) => void;
@@ -68,6 +69,23 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [targetAudience, setTargetAudience] = useState('');
+
+  // Load user's default author name on component mount
+  React.useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const profile = await getUserProfile();
+        if (profile?.default_author_name) {
+          setAuthor(profile.default_author_name);
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        // Don't show error to user, just continue without auto-fill
+      }
+    };
+    
+    loadUserProfile();
+  }, []);
 
   const ROMANCE_SUBGENRES = [
     'Contemporary',
@@ -274,16 +292,19 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-2">
-                Author Name
+                Author Name (from your settings)
               </label>
               <input
                 type="text"
                 id="author"
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
-                placeholder="Enter author name..."
+                placeholder="Enter author name for this book..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Auto-filled from your user settings, but you can edit it for this book
+              </p>
             </div>
 
             <div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, LogIn, Mail, Lock, Eye, EyeOff, UserPlus, Github } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import UserSettings from './UserSettings';
 
 interface UserType {
   id: string;
@@ -19,6 +20,7 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -254,17 +256,29 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* User menu */}
       <div className="absolute top-4 right-4 z-20">
-        <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 shadow-lg">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <User className="w-4 h-4 text-white" />
+        <div className="relative">
+          <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 shadow-lg">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm text-gray-700">{user.email}</span>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 px-2"
+            >
+              Settings
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="text-sm text-gray-500 hover:text-red-500 transition-colors duration-200"
+            >
+              Sign out
+            </button>
           </div>
-          <span className="text-sm text-gray-700">{user.email}</span>
-          <button
-            onClick={handleSignOut}
-            className="text-sm text-gray-500 hover:text-red-500 transition-colors duration-200"
-          >
-            Sign out
-          </button>
+          
+          {showSettings && (
+            <UserSettings onClose={() => setShowSettings(false)} />
+          )}
         </div>
       </div>
       
