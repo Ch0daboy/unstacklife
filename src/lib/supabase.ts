@@ -26,4 +26,28 @@ try {
 }
 
 console.log('Supabase client initializing with URL:', supabaseUrl);
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'x-client-info': 'bookgen-app'
+    }
+  }
+});
+
+// Test connection function
+export const testSupabaseConnection = async () => {
+  try {
+    console.log('Testing Supabase connection...');
+    const { data, error } = await supabase.auth.getSession();
+    console.log('Supabase connection test result:', { data: !!data, error });
+    return { success: !error, error };
+  } catch (error) {
+    console.error('Supabase connection test failed:', error);
+    return { success: false, error };
+  }
+};

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, LogIn, Mail, Lock, Eye, EyeOff, UserPlus, Github } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, testSupabaseConnection } from '../lib/supabase';
 import UserSettings from './UserSettings';
 
 interface UserType {
@@ -36,24 +36,56 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   }, []);
 
   const checkUser = async () => {
+    console.log('Starting user authentication check...');
+    
+    // First test the connection
+    const connectionTest = await testSupabaseConnection();
+    if (!connectionTest.success) {
+      console.error('Supabase connection failed:', connectionTest.error);
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    
     try {
+      console.log('Getting current user from Supabase...');
       const { data: { user }, error } = await supabase.auth.getUser();
+      console.log('Supabase getUser response:', { user: !!user, error });
+      
       if (error) {
         console.error('Supabase auth error:', error);
         setUser(null);
       } else {
+        console.log('User authenticated successfully:', user?.email);
         setUser(user ? { id: user.id, email: user.email || '' } : null);
       }
     } catch (error) {
       console.error('Failed to check user authentication:', error);
       
-      // Provide helpful error message for common issues
-      if (error instanceof Error) {
-        if (error.message.includes('Failed to fetch')) {
-          console.error('Network error: Unable to connect to Supabase. Please check:');
-          console.error('1. Your internet connection');
-          console.error('2. VITE_SUPABASE_URL in your .env file');
-          console.error('3. VITE_SUPABASE_ANON_KEY in your .env file');
+      // Enhanced error diagnostics
+      if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        console.error('=== SUPABASE CONNECTION FAILED ===');
+        console.error('This usually indicates one of the following issues:');
+        console.error('1. Network connectivity problem');
+        console.error('2. Supabase project is paused or inactive');
+        console.error('3. CORS configuration issue in Supabase');
+        console.error('4. Invalid Supabase URL format');
+        console.error('');
+        console.error('Current configuration:');
+        console.error('SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+        console.error('ANON_KEY length:', import.meta.env.VITE_SUPABASE_ANON_KEY?.length || 0);
+        console.error('');
+        console.error('Please check:');
+        console.error('- Your Supabase project is active');
+        console.error('- The URL is accessible from your browser');
+        console.error('- CORS settings allow localhost:5173');
+        
+        // Try to provide more specific guidance
+        try {
+          const url = new URL(import.meta.env.VITE_SUPABASE_URL);
+          console.error('- Try visiting this URL in your browser:', `${url.origin}/rest/v1/`);
+        } catch (urlError) {
+          console.error('- The SUPABASE_URL appears to be malformed');
         }
       }
       setUser(null);
