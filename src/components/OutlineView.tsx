@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3 } from 'lucide-react';
-import { Book, BookChapter } from '../types';
+import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3, Volume2 } from 'lucide-react';
+import { Book, BookChapter, AudiobookData } from '../types';
 import { generateAllContent, generateAllContentWithResearch, convertRomanceHeatLevel } from '../services/contentService';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
 import { generateBookCover, generateBookCoverWithDALLE } from '../services/coverService';
+import AudiobookGenerator from './AudiobookGenerator';
 
 interface OutlineViewProps {
   book: Book;
@@ -27,6 +28,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [showCoverOptions, setShowCoverOptions] = useState(false);
   const [selectedNewHeatLevel, setSelectedNewHeatLevel] = useState('');
+  const [showAudiobookGenerator, setShowAudiobookGenerator] = useState(false);
 
   const HEAT_LEVELS = [
     { value: 'clean', label: 'Clean/Wholesome' },
@@ -104,9 +106,15 @@ const OutlineView: React.FC<OutlineViewProps> = ({
     }
   };
 
+  const handleAudiobookGenerated = (audiobook: AudiobookData) => {
+    // Update the book with the generated audiobook
+    const updatedBook = { ...book, audiobook };
+    onUpdateBook(updatedBook);
+  };
+
   const handleGenerateCover = async (useDALLE: boolean = false) => {
     let apiKey: string;
-    
+
     if (useDALLE) {
       // For DALL-E, we still need OpenAI API key
       const userApiKey = prompt('Enter your OpenAI API key for DALL-E:');
@@ -328,6 +336,13 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                 <Download className="w-5 h-5" />
                 {isExporting ? 'Exporting...' : 'Export as EPUB'}
               </button>
+              <button
+                onClick={() => setShowAudiobookGenerator(true)}
+                className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-xl font-medium hover:from-green-700 hover:to-teal-700 transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <Volume2 className="w-5 h-5" />
+                Create Audiobook
+              </button>
             </div>
           </div>
         ) : (
@@ -434,6 +449,19 @@ const OutlineView: React.FC<OutlineViewProps> = ({
           </div>
         ))}
       </div>
+
+      {/* Audiobook Generator Modal */}
+      {showAudiobookGenerator && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <AudiobookGenerator
+              book={book}
+              onAudiobookGenerated={handleAudiobookGenerated}
+              onClose={() => setShowAudiobookGenerator(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
