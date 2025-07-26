@@ -1,6 +1,7 @@
 import { Book, BookChapter, SubChapter } from '../types';
 import { generateChapterOutline, generateContent, generateContentWithHeatLevel } from './geminiService';
 import { researchTopic } from './perplexityService';
+import { v4 as uuidv4 } from 'uuid';
 
 export const researchAndGenerate = async (
   title: string,
@@ -129,7 +130,7 @@ export const convertRomanceHeatLevel = async (
 
   const newBook: Book = {
     ...originalBook,
-    id: `book-${Date.now()}`,
+    id: uuidv4(),
     title: `${originalBook.title} - ${heatLevelLabels[newHeatLevel]} Version`,
     subGenre: originalBook.subGenre,
     heatLevel: newHeatLevel,
@@ -138,11 +139,11 @@ export const convertRomanceHeatLevel = async (
     status: 'generating',
     chapters: originalBook.chapters.map(chapter => ({
       ...chapter,
-      id: `chapter-${Date.now()}-${Math.random()}`,
+      id: uuidv4(),
       status: 'pending',
       subChapters: chapter.subChapters?.map(subChapter => ({
         ...subChapter,
-        id: `section-${Date.now()}-${Math.random()}`,
+        id: uuidv4(),
         status: 'pending',
         content: undefined // Clear existing content
       }))

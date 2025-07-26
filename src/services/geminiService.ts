@@ -1,4 +1,5 @@
 import { Book, BookChapter, SubChapter } from '../types';
+import { v4 as uuidv4 } from 'uuid';
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
@@ -214,7 +215,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
     const bookData = JSON.parse(jsonMatch[0]);
     
     return {
-      id: `book-${Date.now()}`,
+      id: uuidv4(),
       title: bookData.title,
       description: bookData.description,
       genre: bookData.genre,
@@ -224,7 +225,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
       perspective: bookData.perspective,
       status: 'draft',
       chapters: bookData.chapters.map((chapter: any, index: number) => ({
-        id: `chapter-${index + 1}`,
+        id: uuidv4(),
         title: chapter.title,
         description: chapter.description,
         status: 'pending'
@@ -280,7 +281,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
     const outlineData = JSON.parse(jsonMatch[0]);
     
     return outlineData.sections.map((section: any, index: number) => ({
-      id: `section-${Date.now()}-${index}`,
+      id: uuidv4(),
       title: section.title,
       description: section.description,
       status: 'pending'
