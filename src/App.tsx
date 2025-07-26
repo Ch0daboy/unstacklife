@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import AuthWrapper from './components/AuthWrapper';
+import { supabase } from './lib/supabase';
 import BookSidebar from './components/BookSidebar';
 import BookPrompt from './components/BookPrompt';
 import OutlineView from './components/OutlineView';
@@ -15,6 +17,18 @@ function App() {
   const [selectedChapter, setSelectedChapter] = useState<BookChapter | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
+  // Handle OAuth callback
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // OAuth callback successful
+        console.log('OAuth sign in successful');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const apiKeys = {
     gemini: import.meta.env.VITE_GEMINI_API_KEY || '',
     perplexity: import.meta.env.VITE_PERPLEXITY_API_KEY || ''
