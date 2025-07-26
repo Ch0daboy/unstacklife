@@ -104,9 +104,11 @@ const BookSidebar: React.FC<BookSidebarProps> = ({
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                <Book className="w-5 h-5 text-white" />
-              </div>
+              <img 
+                src="/generated-image.png" 
+                alt="Unstack Logo" 
+                className="h-8 w-auto"
+              />
               <h2 className="text-lg font-semibold text-gray-800">My Books</h2>
             </div>
             

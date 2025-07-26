@@ -245,11 +245,13 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
     <div className="max-w-3xl mx-auto">
       <div className="bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full mb-4">
-            <BookOpen className="w-8 h-8 text-white" />
-          </div>
+          <img 
+            src="/generated-image.png" 
+            alt="Unstack Logo" 
+            className="h-16 w-auto mx-auto mb-4"
+          />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Create Your eBook</h2>
-          <p className="text-gray-600">Describe the book you want to create and let AI generate a comprehensive outline</p>
+          <p className="text-gray-600">Describe the book you want to create and let Unstack's AI generate a comprehensive outline</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

@@ -33,11 +33,13 @@ const APISettings: React.FC<APISettingsProps> = ({ onAPIKeysSet }) => {
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4">
-            <Key className="w-8 h-8 text-white" />
-          </div>
+          <img 
+            src="/generated-image.png" 
+            alt="Unstack Logo" 
+            className="h-16 w-auto mx-auto mb-4"
+          />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">API Configuration</h2>
-          <p className="text-gray-600">Enter your API keys to get started with AI-powered eBook generation</p>
+          <p className="text-gray-600">Enter your API keys to get started with Unstack's AI-powered eBook generation</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
