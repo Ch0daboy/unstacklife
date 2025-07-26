@@ -37,13 +37,17 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
-        console.error('Error checking user:', error);
+        if (error.message !== 'Auth session missing!') {
+          console.error('Error checking user:', error);
+        }
         setUser(null);
       } else {
         setUser(user ? { id: user.id, email: user.email || '' } : null);
       }
     } catch (error) {
-      console.error('Failed to check user:', error);
+      if (error instanceof Error && error.message !== 'Auth session missing!') {
+        console.error('Failed to check user:', error);
+      }
       setUser(null);
     } finally {
       setLoading(false);
