@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Book, BookOpen, Plus, Trash2, Clock, CheckCircle2, Play } from 'lucide-react';
 import { Book as BookType } from '../types';
 import { loadAllBooks, deleteBook } from '../services/bookService';
+import { loadBook } from '../services/bookService';
 
 interface BookSidebarProps {
   isOpen: boolean;
@@ -49,6 +50,18 @@ const BookSidebar: React.FC<BookSidebarProps> = ({
     }
   };
 
+  const handleSelectBook = async (book: BookType) => {
+    try {
+      // Load full book details including chapters
+      const fullBook = await loadBook(book.id);
+      if (fullBook) {
+        onSelectBook(fullBook);
+      }
+    } catch (error) {
+      console.error('Error loading book:', error);
+      onSelectBook(book); // Fallback to basic book data
+    }
+  };
   const getStatusIcon = (book: BookType) => {
     const completedChapters = book.chapters.filter(ch => ch.status === 'completed').length;
     const totalChapters = book.chapters.length;
@@ -91,9 +104,11 @@ const BookSidebar: React.FC<BookSidebarProps> = ({
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                <Book className="w-5 h-5 text-white" />
-              </div>
+              <img 
+                src="/generated-image.png" 
+                alt="Unstack Logo" 
+                className="h-8 w-auto"
+              />
               <h2 className="text-lg font-semibold text-gray-800">My Books</h2>
             </div>
             
@@ -123,7 +138,7 @@ const BookSidebar: React.FC<BookSidebarProps> = ({
                 {books.map((book) => (
                   <div
                     key={book.id}
-                    onClick={() => onSelectBook(book)}
+                    onClick={() => handleSelectBook(book)}
                     className={`
                       p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md group
                       ${currentBookId === book.id 
@@ -136,6 +151,13 @@ const BookSidebar: React.FC<BookSidebarProps> = ({
                       <h3 className="font-medium text-gray-800 text-sm line-clamp-2 flex-1 mr-2">
                         {book.title}
                       </h3>
+                      {book.coverUrl && (
+                        <img 
+                          src={book.coverUrl} 
+                          alt={`${book.title} cover`}
+                          className="w-8 h-12 object-cover rounded-sm mr-2 flex-shrink-0"
+                        />
+                      )}
                       <button
                         onClick={(e) => handleDeleteBook(book.id, e)}
                         className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all duration-200"

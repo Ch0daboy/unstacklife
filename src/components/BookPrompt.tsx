@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BookOpen, Sparkles, Wand2 } from 'lucide-react';
 import { generateBookOutline } from '../services/geminiService';
 import { Book } from '../types';
+import { getUserProfile } from '../services/userService';
 
 interface BookPromptProps {
   onBookGenerated: (book: Book) => void;
@@ -58,6 +59,7 @@ const HEAT_LEVELS = [
 
 const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => {
   const [prompt, setPrompt] = useState('');
+  const [author, setAuthor] = useState('');
   const [genre, setGenre] = useState('');
   const [subGenre, setSubGenre] = useState('');
   const [tone, setTone] = useState('');
@@ -67,6 +69,23 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [targetAudience, setTargetAudience] = useState('');
+
+  // Load user's default author name on component mount
+  React.useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const profile = await getUserProfile();
+        if (profile?.default_author_name) {
+          setAuthor(profile.default_author_name);
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        // Don't show error to user, just continue without auto-fill
+      }
+    };
+    
+    loadUserProfile();
+  }, []);
 
   const ROMANCE_SUBGENRES = [
     'Contemporary',
@@ -210,7 +229,7 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
 
     setIsGenerating(true);
     try {
-      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, apiKeys.gemini);
+      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, apiKeys.gemini);
       onBookGenerated(book);
     } catch (error) {
       console.error('Error generating book outline:', error);
@@ -226,11 +245,13 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
     <div className="max-w-3xl mx-auto">
       <div className="bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full mb-4">
-            <BookOpen className="w-8 h-8 text-white" />
-          </div>
+          <img 
+            src="/generated-image.png" 
+            alt="Unstack Logo" 
+            className="h-16 w-auto mx-auto mb-4"
+          />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Create Your eBook</h2>
-          <p className="text-gray-600">Describe the book you want to create and let AI generate a comprehensive outline</p>
+          <p className="text-gray-600">Describe the book you want to create and let Unstack's AI generate a comprehensive outline</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -271,6 +292,23 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-2">
+                Author Name (from your settings)
+              </label>
+              <input
+                type="text"
+                id="author"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                placeholder="Enter author name for this book..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Auto-filled from your user settings, but you can edit it for this book
+              </p>
+            </div>
+
             <div>
               <label htmlFor="genre" className="block text-sm font-medium text-gray-700 mb-2">
                 Genre

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart } from 'lucide-react';
-import { Book, BookChapter } from '../types';
+import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3, Volume2 } from 'lucide-react';
+import { Book, BookChapter, AudiobookData } from '../types';
 import { generateAllContent, generateAllContentWithResearch, convertRomanceHeatLevel } from '../services/contentService';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
+import { generateBookCover, generateBookCoverWithDALLE } from '../services/coverService';
+import AudiobookGenerator from './AudiobookGenerator';
 
 interface OutlineViewProps {
   book: Book;
@@ -23,7 +25,10 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [showHeatLevelSelector, setShowHeatLevelSelector] = useState(false);
+  const [isGeneratingCover, setIsGeneratingCover] = useState(false);
+  const [showCoverOptions, setShowCoverOptions] = useState(false);
   const [selectedNewHeatLevel, setSelectedNewHeatLevel] = useState('');
+  const [showAudiobookGenerator, setShowAudiobookGenerator] = useState(false);
 
   const HEAT_LEVELS = [
     { value: 'clean', label: 'Clean/Wholesome' },
@@ -101,6 +106,42 @@ const OutlineView: React.FC<OutlineViewProps> = ({
     }
   };
 
+  const handleAudiobookGenerated = (audiobook: AudiobookData) => {
+    // Update the book with the generated audiobook
+    const updatedBook = { ...book, audiobook };
+    onUpdateBook(updatedBook);
+  };
+
+  const handleGenerateCover = async (useDALLE: boolean = false) => {
+    let apiKey: string;
+
+    if (useDALLE) {
+      // For DALL-E, we still need OpenAI API key
+      const userApiKey = prompt('Enter your OpenAI API key for DALL-E:');
+      if (!userApiKey) return;
+      apiKey = userApiKey;
+    } else {
+      // For Gemini Imagen, use the existing Gemini API key
+      apiKey = apiKeys.gemini;
+    }
+    
+    setIsGeneratingCover(true);
+    try {
+      const coverUrl = useDALLE 
+        ? await generateBookCoverWithDALLE(book, apiKey)
+        : await generateBookCover(book, apiKey);
+      
+      const updatedBook = { ...book, coverUrl };
+      onUpdateBook(updatedBook);
+      setShowCoverOptions(false);
+    } catch (error) {
+      console.error('Error generating cover:', error);
+      alert('Failed to generate cover. Please check your API key and try again.');
+    } finally {
+      setIsGeneratingCover(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'text-green-600 bg-green-100';
@@ -122,8 +163,18 @@ const OutlineView: React.FC<OutlineViewProps> = ({
       <div className="bg-white rounded-2xl shadow-xl p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-4">
+              {book.coverUrl ? (
+                <img 
+                  src={book.coverUrl} 
+                  alt={`${book.title} cover`}
+                  className="w-16 h-24 object-cover rounded-lg shadow-md"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+              )}
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-800">{book.title}</h1>
@@ -165,80 +216,109 @@ const OutlineView: React.FC<OutlineViewProps> = ({
         </div>
 
         {/* Action Buttons */}
-        {!isBookCompleted ? (
-          <div className="flex gap-3">
-            <button
-              onClick={() => handleGenerateAll(false)}
-              disabled={isGeneratingAll}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              <Play className="w-5 h-5" />
-              {isGeneratingAll ? 'Generating...' : 'Generate All'}
-            </button>
-            <button
-              onClick={() => handleGenerateAll(true)}
-              disabled={isGeneratingAll}
-              className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-xl font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              <Search className="w-5 h-5" />
-              {isGeneratingAll ? 'Researching...' : 'Research & Generate All'}
-            </button>
-          </div>
-        ) : (
+        {isBookCompleted ? (
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-3 px-6 rounded-xl">
               <FileText className="w-5 h-5" />
               <span className="font-medium">Book completed! Ready for export.</span>
             </div>
             <div className="flex gap-3">
-            {/* Romance Heat Level Conversion */}
-            {isRomanceBook && (
+              <button
+                onClick={() => window.location.hash = `#edit/${book.id}`}
+                className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-medium hover:from-orange-700 hover:to-red-700 transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <Edit3 className="w-5 h-5" />
+                Edit Book
+              </button>
+              
+              {/* Cover Generation */}
               <div className="space-y-3">
-                {!showHeatLevelSelector ? (
+                {!showCoverOptions ? (
                   <button
-                    onClick={() => setShowHeatLevelSelector(true)}
-                    className="w-full bg-gradient-to-r from-pink-600 to-rose-600 text-white py-3 px-6 rounded-xl font-medium hover:from-pink-700 hover:to-rose-700 transition-all duration-200 flex items-center justify-center gap-2"
+                    onClick={() => setShowCoverOptions(true)}
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center gap-2"
                   >
-                    <Heart className="w-5 h-5" />
-                    Create Version with Different Heat Level
+                    <Palette className="w-5 h-5" />
+                    {book.coverUrl ? 'Regenerate Cover' : 'Generate Cover'}
                   </button>
                 ) : (
-                  <div className="bg-pink-50 p-4 rounded-xl space-y-3">
-                    <h4 className="font-medium text-pink-900">Convert to Different Heat Level</h4>
-                    <select
-                      value={selectedNewHeatLevel}
-                      onChange={(e) => setSelectedNewHeatLevel(e.target.value)}
-                      className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                    >
-                      <option value="">Select new heat level...</option>
-                      {HEAT_LEVELS.filter(level => level.value !== book.heatLevel).map((level) => (
-                        <option key={level.value} value={level.value}>
-                          {level.label}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="bg-purple-50 p-4 rounded-xl space-y-3">
+                    <h4 className="font-medium text-purple-900">Choose Cover Generation Service</h4>
                     <div className="flex gap-2">
                       <button
-                        onClick={handleConvertHeatLevel}
-                        disabled={!selectedNewHeatLevel || isConverting}
-                        className="flex-1 bg-gradient-to-r from-pink-600 to-rose-600 text-white py-2 px-4 rounded-lg font-medium hover:from-pink-700 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        onClick={() => handleGenerateCover(false)}
+                        disabled={isGeneratingCover}
+                        className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                       >
-                        {isConverting ? 'Converting...' : 'Convert'}
+                        <Image className="w-4 h-4" />
+                        {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
                       </button>
                       <button
-                        onClick={() => {
-                          setShowHeatLevelSelector(false);
-                          setSelectedNewHeatLevel('');
-                        }}
-                        className="px-4 py-2 text-pink-600 hover:text-pink-800 transition-colors duration-200"
+                        onClick={() => handleGenerateCover(true)}
+                        disabled={isGeneratingCover}
+                        className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                       >
-                        Cancel
+                        <Palette className="w-4 h-4" />
+                        {isGeneratingCover ? 'Generating...' : 'DALL-E'}
                       </button>
                     </div>
+                    <button
+                      onClick={() => setShowCoverOptions(false)}
+                      className="w-full px-4 py-2 text-purple-600 hover:text-purple-800 transition-colors duration-200"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 )}
               </div>
-            )}
+              
+              {isRomanceBook && (
+                <div className="space-y-3">
+                  {!showHeatLevelSelector ? (
+                    <button
+                      onClick={() => setShowHeatLevelSelector(true)}
+                      className="w-full bg-gradient-to-r from-pink-600 to-rose-600 text-white py-3 px-6 rounded-xl font-medium hover:from-pink-700 hover:to-rose-700 transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Heart className="w-5 h-5" />
+                      Create Version with Different Heat Level
+                    </button>
+                  ) : (
+                    <div className="bg-pink-50 p-4 rounded-xl space-y-3">
+                      <h4 className="font-medium text-pink-900">Convert to Different Heat Level</h4>
+                      <select
+                        value={selectedNewHeatLevel}
+                        onChange={(e) => setSelectedNewHeatLevel(e.target.value)}
+                        className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                      >
+                        <option value="">Select new heat level...</option>
+                        {HEAT_LEVELS.filter(level => level.value !== book.heatLevel).map((level) => (
+                          <option key={level.value} value={level.value}>
+                            {level.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleConvertHeatLevel}
+                          disabled={!selectedNewHeatLevel || isConverting}
+                          className="flex-1 bg-gradient-to-r from-pink-600 to-rose-600 text-white py-2 px-4 rounded-lg font-medium hover:from-pink-700 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          {isConverting ? 'Converting...' : 'Convert'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowHeatLevelSelector(false);
+                            setSelectedNewHeatLevel('');
+                          }}
+                          className="px-4 py-2 text-pink-600 hover:text-pink-800 transition-colors duration-200"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <button
                 onClick={() => handleExport('pdf')}
@@ -256,7 +336,82 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                 <Download className="w-5 h-5" />
                 {isExporting ? 'Exporting...' : 'Export as EPUB'}
               </button>
+              <button
+                onClick={() => setShowAudiobookGenerator(true)}
+                className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-xl font-medium hover:from-green-700 hover:to-teal-700 transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <Volume2 className="w-5 h-5" />
+                Create Audiobook
+              </button>
             </div>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            {/* Cover Generation */}
+            <div className="space-y-3">
+              {!showCoverOptions ? (
+                <button
+                  onClick={() => setShowCoverOptions(true)}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <Palette className="w-5 h-5" />
+                  Generate Cover
+                </button>
+              ) : (
+                <div className="bg-purple-50 p-4 rounded-xl space-y-3">
+                  <h4 className="font-medium text-purple-900">Choose Cover Generation Service</h4>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleGenerateCover(false)}
+                      disabled={isGeneratingCover}
+                      className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Image className="w-4 h-4" />
+                      {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
+                    </button>
+                    <button
+                      onClick={() => handleGenerateCover(true)}
+                      disabled={isGeneratingCover}
+                      className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Palette className="w-4 h-4" />
+                      {isGeneratingCover ? 'Generating...' : 'DALL-E'}
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setShowCoverOptions(false)}
+                    className="w-full px-4 py-2 text-purple-600 hover:text-purple-800 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={() => window.location.hash = `#edit/${book.id}`}
+              className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 px-6 rounded-xl font-medium hover:from-orange-700 hover:to-red-700 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Edit3 className="w-5 h-5" />
+              Edit Book
+            </button>
+            
+            <button
+              onClick={() => handleGenerateAll(false)}
+              disabled={isGeneratingAll}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Play className="w-5 h-5" />
+              {isGeneratingAll ? 'Generating...' : 'Generate All'}
+            </button>
+            <button
+              onClick={() => handleGenerateAll(true)}
+              disabled={isGeneratingAll}
+              className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-xl font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Search className="w-5 h-5" />
+              {isGeneratingAll ? 'Researching...' : 'Research & Generate All'}
+            </button>
           </div>
         )}
       </div>
@@ -294,6 +449,19 @@ const OutlineView: React.FC<OutlineViewProps> = ({
           </div>
         ))}
       </div>
+
+      {/* Audiobook Generator Modal */}
+      {showAudiobookGenerator && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <AudiobookGenerator
+              book={book}
+              onAudiobookGenerated={handleAudiobookGenerated}
+              onClose={() => setShowAudiobookGenerator(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,19 +1,34 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import AuthWrapper from './components/AuthWrapper';
+import { supabase } from './lib/supabase';
 import BookSidebar from './components/BookSidebar';
 import BookPrompt from './components/BookPrompt';
 import OutlineView from './components/OutlineView';
 import ChapterView from './components/ChapterView';
+import BookEditor from './components/BookEditor';
 import { Book, BookChapter, SubChapter } from './types';
 import { saveBook, loadBook } from './services/bookService';
 
 function App() {
-  const [currentStep, setCurrentStep] = useState<'prompt' | 'outline' | 'chapter'>('prompt');
+  const [currentStep, setCurrentStep] = useState<'prompt' | 'outline' | 'chapter' | 'edit'>('prompt');
   const [book, setBook] = useState<Book | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<BookChapter | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
+  // Handle OAuth callback
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // OAuth callback successful
+        console.log('OAuth sign in successful');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const apiKeys = {
     gemini: import.meta.env.VITE_GEMINI_API_KEY || '',
     perplexity: import.meta.env.VITE_PERPLEXITY_API_KEY || ''
@@ -70,7 +85,13 @@ function App() {
       if (fullBook) {
         setBook(fullBook);
         setSelectedChapter(null);
-        setCurrentStep('outline');
+        // Check if we're in edit mode from URL hash
+        const hash = window.location.hash;
+        if (hash.startsWith('#edit/')) {
+          setCurrentStep('edit');
+        } else {
+          setCurrentStep('outline');
+        }
         setSidebarOpen(false);
       }
     } catch (error) {
@@ -85,6 +106,31 @@ function App() {
     setCurrentStep('prompt');
     setSidebarOpen(false);
   };
+
+  const handleEditBook = () => {
+    if (book) {
+      setCurrentStep('edit');
+      window.location.hash = `#edit/${book.id}`;
+    }
+  };
+
+  const handleBackFromEdit = () => {
+    setCurrentStep('outline');
+    window.location.hash = '';
+  };
+
+  // Handle URL hash changes for edit mode
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#edit/') && book) {
+        setCurrentStep('edit');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [book]);
 
   return (
     <AuthWrapper>
@@ -110,9 +156,16 @@ function App() {
                 >
                   <Menu className="w-5 h-5 text-gray-600" />
                 </button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">AI eBook Generator</h1>
-                  <p className="text-gray-600 hidden sm:block">Create comprehensive eBooks with AI-powered research and generation</p>
+                <div className="flex items-center gap-4">
+                  <img 
+                    src="/generated-image.png" 
+                    alt="Unstack Logo" 
+                    className="h-10 w-auto"
+                  />
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Unstack</h1>
+                    <p className="text-gray-600 hidden sm:block">Create comprehensive eBooks with AI-powered research and generation</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -146,6 +199,18 @@ function App() {
                   chapter={selectedChapter}
                   onBack={handleBackToOutline}
                   onUpdateChapter={handleUpdateChapter}
+                  apiKeys={apiKeys}
+                />
+              )}
+
+              {currentStep === 'edit' && book && (
+                <BookEditor 
+                  book={book}
+                  onBack={handleBackFromEdit}
+                  onUpdateBook={(updatedBook) => {
+                    setBook(updatedBook);
+                    saveBookToDatabase(updatedBook);
+                  }}
                   apiKeys={apiKeys}
                 />
               )}
