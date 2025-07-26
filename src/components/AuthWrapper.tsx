@@ -34,9 +34,20 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   }, []);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user ? { id: user.id, email: user.email || '' } : null);
-    setLoading(false);
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Error checking user:', error);
+        setUser(null);
+      } else {
+        setUser(user ? { id: user.id, email: user.email || '' } : null);
+      }
+    } catch (error) {
+      console.error('Failed to check user:', error);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAuth = async (e: React.FormEvent) => {
