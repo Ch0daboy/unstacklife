@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3, Volume2 } from 'lucide-react';
+import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3, Volume2, Square } from 'lucide-react';
 import { Book, BookChapter, AudiobookData } from '../types';
 import { generateAllContent, generateAllContentWithResearch, convertRomanceHeatLevel } from '../services/contentService';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
@@ -12,6 +12,9 @@ interface OutlineViewProps {
   onNewBook: () => void;
   onUpdateBook: (book: Book) => void;
   apiKeys: {gemini: string; perplexity: string};
+  isCancelled: boolean;
+  onCancel: () => void;
+  onResume: () => void;
 }
 
 const OutlineView: React.FC<OutlineViewProps> = ({ 
@@ -19,7 +22,10 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   onChapterClick, 
   onNewBook, 
   onUpdateBook, 
-  apiKeys 
+  apiKeys,
+  isCancelled,
+  onCancel,
+  onResume 
 }) => {
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -40,6 +46,8 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   ];
 
   const handleGenerateAll = async (withResearch: boolean = false) => {
+    if (isCancelled) return;
+
     setIsGeneratingAll(true);
     try {
       let updatedBook = { ...book };
@@ -47,17 +55,21 @@ const OutlineView: React.FC<OutlineViewProps> = ({
       if (withResearch) {
         updatedBook = await generateAllContentWithResearch(updatedBook, apiKeys, (progress) => {
           onUpdateBook(progress);
-        });
+        }, () => isCancelled);
       } else {
         updatedBook = await generateAllContent(updatedBook, apiKeys.gemini, (progress) => {
           onUpdateBook(progress);
-        });
+        }, () => isCancelled);
       }
       
-      onUpdateBook(updatedBook);
+      if (!isCancelled) {
+        onUpdateBook(updatedBook);
+      }
     } catch (error) {
       console.error('Error generating all content:', error);
-      alert('Failed to generate all content. Please try again.');
+      if (!isCancelled) {
+        alert('Failed to generate all content. Please try again.');
+      }
     } finally {
       setIsGeneratingAll(false);
     }
@@ -396,22 +408,52 @@ const OutlineView: React.FC<OutlineViewProps> = ({
               Edit Book
             </button>
             
-            <button
-              onClick={() => handleGenerateAll(false)}
-              disabled={isGeneratingAll}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              <Play className="w-5 h-5" />
-              {isGeneratingAll ? 'Generating...' : 'Generate All'}
-            </button>
-            <button
-              onClick={() => handleGenerateAll(true)}
-              disabled={isGeneratingAll}
-              className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-xl font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              <Search className="w-5 h-5" />
-              {isGeneratingAll ? 'Researching...' : 'Research & Generate All'}
-            </button>
+            {!isGeneratingAll ? (
+              <>
+                <button
+                  onClick={() => handleGenerateAll(false)}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <Play className="w-5 h-5" />
+                  Generate All
+                </button>
+                <button
+                  onClick={() => handleGenerateAll(true)}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-xl font-medium hover:from-green-700 hover:to-teal-700 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <Search className="w-5 h-5" />
+                  Research & Generate All
+                </button>
+              </>
+            ) : (
+              <div className="flex-1 bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3 text-blue-600">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="font-medium">
+                      {isCancelled ? 'Cancelling generation...' : 'Generating content...'}
+                    </span>
+                  </div>
+                  {!isCancelled ? (
+                    <button
+                      onClick={onCancel}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                    >
+                      <Square className="w-4 h-4" />
+                      Stop
+                    </button>
+                  ) : (
+                    <button
+                      onClick={onResume}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                    >
+                      <Play className="w-4 h-4" />
+                      Resume
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, FileText, Play, Search, CheckCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Play, Search, CheckCircle, Square } from 'lucide-react';
 import { BookChapter, SubChapter } from '../types';
 import { generateChapterOutline, generateContent } from '../services/geminiService';
 import { researchAndGenerate } from '../services/contentService';
@@ -9,13 +9,19 @@ interface ChapterViewProps {
   onBack: () => void;
   onUpdateChapter: (chapter: BookChapter) => void;
   apiKeys: {gemini: string; perplexity: string};
+  isCancelled: boolean;
+  onCancel: () => void;
+  onResume: () => void;
 }
 
 const ChapterView: React.FC<ChapterViewProps> = ({ 
   chapter, 
   onBack, 
   onUpdateChapter,
-  apiKeys 
+  apiKeys,
+  isCancelled,
+  onCancel,
+  onResume 
 }) => {
   const [localChapter, setLocalChapter] = useState<BookChapter>(chapter);
   const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
@@ -46,6 +52,8 @@ const ChapterView: React.FC<ChapterViewProps> = ({
   };
 
   const handleGenerate = async (subChapter: SubChapter, withResearch: boolean = false) => {
+    if (isCancelled) return;
+
     const updatedSubChapter = { ...subChapter, status: 'generating' as const };
     const updatedSubChapters = localChapter.subChapters?.map(sc => 
       sc.id === subChapter.id ? updatedSubChapter : sc
@@ -59,9 +67,22 @@ const ChapterView: React.FC<ChapterViewProps> = ({
       let content: string;
       
       if (withResearch) {
-        content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys);
+        content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, () => isCancelled);
       } else {
-        content = await generateContent(subChapter.title, subChapter.description, apiKeys.gemini);
+        content = await generateContent(subChapter.title, subChapter.description, apiKeys.gemini, () => isCancelled);
+      }
+
+      // Check if cancelled during generation
+      if (isCancelled) {
+        const cancelledSubChapter = { ...subChapter, status: 'pending' as const };
+        const cancelledSubChapters = localChapter.subChapters?.map(sc => 
+          sc.id === subChapter.id ? cancelledSubChapter : sc
+        ) || [];
+        
+        const cancelledChapter = { ...localChapter, subChapters: cancelledSubChapters };
+        setLocalChapter(cancelledChapter);
+        onUpdateChapter(cancelledChapter);
+        return;
       }
 
       const completedSubChapter = { 
@@ -79,7 +100,9 @@ const ChapterView: React.FC<ChapterViewProps> = ({
       onUpdateChapter(finalChapter);
     } catch (error) {
       console.error('Error generating content:', error);
-      alert('Failed to generate content. Please try again.');
+      if (!isCancelled) {
+        alert('Failed to generate content. Please try again.');
+      }
       
       // Reset status on error
       const resetSubChapter = { ...subChapter, status: 'pending' as const };
@@ -175,11 +198,30 @@ const ChapterView: React.FC<ChapterViewProps> = ({
                 )}
 
                 {subChapter.status === 'generating' && (
-                  <div className="flex items-center justify-center py-4">
+                  <div className="flex items-center justify-between py-4">
                     <div className="flex items-center gap-3 text-blue-600">
                       <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="font-medium">Generating content...</span>
+                      <span className="font-medium">
+                        {isCancelled ? 'Cancelling...' : 'Generating content...'}
+                      </span>
                     </div>
+                    {!isCancelled ? (
+                      <button
+                        onClick={onCancel}
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                      >
+                        <Square className="w-4 h-4" />
+                        Stop
+                      </button>
+                    ) : (
+                      <button
+                        onClick={onResume}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                      >
+                        <Play className="w-4 h-4" />
+                        Resume
+                      </button>
+                    )}
                   </div>
                 )}
 

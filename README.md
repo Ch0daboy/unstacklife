@@ -1,72 +1,68 @@
-# 📚 Unstack - AI-Powered eBook Generator
+# BookGen - AI-Powered Book & Audiobook Creator
 
-> Transform your ideas into complete books with the power of AI
+BookGen is a sophisticated React/TypeScript web application that generates comprehensive books and audiobooks using advanced AI technology. Create professional-quality content from simple prompts with multi-step generation workflows and intelligent research capabilities.
 
-Unstack is a comprehensive AI-powered platform that helps you create, edit, and publish complete books from simple prompts. Whether you're writing fiction, non-fiction, or specialized content, Unstack streamlines the entire book creation process with intelligent automation and professional-grade features.
+![BookGen Interface](./public/generated-image.png)
 
-## ✨ Features
+## 🚀 Features
 
-### 🤖 AI-Powered Content Generation
-- **Smart Book Outlines**: Generate comprehensive chapter structures from simple prompts
-- **Intelligent Content Creation**: AI writes detailed chapters and sub-chapters
-- **Research Integration**: Automatic topic research using Perplexity AI
-- **Multiple AI Models**: Powered by Google Gemini for high-quality content generation
+### Content Generation
+- **Multi-Step Workflow**: Prompt → Outline → Chapter Writing → Full Editing
+- **AI-Powered Research**: Integration with Perplexity API for fact-checked, well-researched content
+- **Dual Generation Modes**: Quick generation or research-enhanced content creation
+- **Smart Content Organization**: Automatic chapter and sub-chapter structuring
 
-### 👤 Writing Personas System
-- **Custom Author Profiles**: Create and manage multiple writing personas
-- **AI Style Analysis**: Upload writing samples for automatic style extraction
-- **Consistent Voice**: Maintain specific writing styles across all content
-- **Export/Import**: Share personas between accounts or backup your collection
-- **Genre Specialization**: Personas optimized for specific genres and audiences
+### User Experience
+- **Progress Control**: Stop and resume content generation at any point
+- **Real-Time Progress**: Live updates and status tracking during generation
+- **Persistent Storage**: All work automatically saved to Supabase
+- **Responsive Design**: Optimized for desktop and mobile devices
 
-### 📖 Advanced Book Management
-- **Multi-Genre Support**: Romance, Fantasy, Sci-Fi, Mystery, Non-Fiction, and more
-- **Heat Level Control**: Customizable content intensity for romance novels
-- **Perspective Options**: First person, third person limited/omniscient, second person
-- **Target Audience**: Tailor content for specific demographics
-- **Progress Tracking**: Monitor generation status across chapters
+### Export & Publishing
+- **Multiple Formats**: Export to PDF and EPUB
+- **Audiobook Creation**: Text-to-speech audiobook generation with voice customization
+- **Cover Art Generation**: AI-generated book covers using Gemini Imagen or DALL-E
+- **Professional Formatting**: Publication-ready output
 
-### 🎧 Audiobook Generation
-- **Text-to-Speech**: Convert your books into professional audiobooks
-- **Voice Selection**: Choose from multiple AI voices with gender and language options
-- **Smart Voice Matching**: AI recommends optimal voices based on book content
-- **Chapter-by-Chapter**: Generate audio for individual chapters or entire books
-- **Export Ready**: Download complete audiobook packages with playlists
+### Genre Specialization
+- **Romance Heat Levels**: Specialized romance writing with adjustable heat levels (Clean to Explicit)
+- **Multiple Perspectives**: First person, third person limited/omniscient, second person
+- **Tone Customization**: Adjust writing tone to match genre and audience
+- **Cross-Version Creation**: Generate multiple versions with different heat levels
 
-### 📄 Professional Export Options
-- **PDF Export**: Clean, formatted PDF books ready for printing
-- **EPUB Generation**: Industry-standard eBook format for digital publishing
-- **Audiobook Packages**: Complete audio files with metadata and playlists
-- **Multiple Formats**: Choose the best format for your distribution needs
+## 🛠️ Technology Stack
 
-### 🎨 Cover Generation
-- **AI Cover Art**: Generate professional book covers using DALL-E
-- **Genre-Specific**: Covers tailored to your book's genre and style
-- **Custom Prompts**: Detailed prompts based on book content and metadata
-- **High Resolution**: Print-ready cover images
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development and optimized builds
+- **Tailwind CSS** for modern, responsive styling
+- **Lucide React** for consistent iconography
 
-### 🔐 User Management & Security
-- **Supabase Authentication**: Secure user accounts with email/password
-- **Personal Libraries**: Each user's books and personas are private
-- **Cloud Storage**: All content safely stored in the cloud
-- **Real-time Sync**: Access your work from any device
+### Backend & Services
+- **Supabase** - Authentication, database, and real-time features
+- **Google Gemini API** - Primary content generation and image creation
+- **Perplexity API** - Research and fact-checking
+- **Web Speech API** - Browser-native text-to-speech
 
-## 🚀 Getting Started
+### Architecture
+- Component-based architecture with TypeScript interfaces
+- Service layer pattern for business logic encapsulation
+- Real-time state management with React hooks
+- Automatic data persistence and synchronization
 
-### Prerequisites
+## 📋 Prerequisites
+
 - Node.js 18+ and npm
-- API Keys for:
-  - Google Gemini (for content generation)
-  - Perplexity AI (for research, optional)
-  - OpenAI (for cover generation, optional)
-- Supabase account (for database and authentication)
+- Supabase account and project
+- Google Gemini API key
+- Perplexity API key
 
-### Installation
+## 🔧 Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/Unstack.git
-   cd Unstack
+   git clone https://github.com/yourusername/bookgen.git
+   cd bookgen
    ```
 
 2. **Install dependencies**
@@ -74,216 +70,173 @@ Unstack is a comprehensive AI-powered platform that helps you create, edit, and 
    npm install
    ```
 
-3. **Environment Setup**
+3. **Set up environment variables**
    Create a `.env` file in the root directory:
    ```env
-   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_GEMINI_API_KEY=your_gemini_api_key
+   VITE_PERPLEXITY_API_KEY=your_perplexity_api_key
    ```
 
-4. **Database Setup**
-   Run the SQL migrations in your Supabase dashboard:
-   - `supabase/migrations/20250726000001_initial_schema.sql`
-   - `supabase/migrations/20250726000002_add_writing_personas.sql`
+4. **Set up Supabase database**
+   - Create a new Supabase project
+   - Run the migration files from `supabase/migrations/`
+   - Enable Row Level Security (RLS) for user data isolation
 
-5. **Start Development Server**
+5. **Start development server**
    ```bash
    npm run dev
    ```
 
-6. **Open in Browser**
-   Navigate to `http://localhost:5173`
+## 🎯 Usage
 
-### First Time Setup
+### Creating Your First Book
 
-1. **Create Account**: Sign up with email and password
-2. **Add API Keys**: Go to Settings and add your AI service API keys
-3. **Create Your First Book**: Use the book prompt interface to generate your first outline
-4. **Explore Personas**: Create writing personas to maintain consistent styles
+1. **Start with a Prompt**
+   - Enter your book concept, genre, and requirements
+   - Specify target audience, tone, and perspective
+   - For romance: Select appropriate heat level
 
-## 🛠️ Technology Stack
+2. **Review the Outline**
+   - AI generates a comprehensive chapter structure
+   - Modify chapters and descriptions as needed
+   - Use bulk generation or individual chapter creation
 
-### Frontend
-- **React 18** with TypeScript
-- **Vite** for fast development and building
-- **Tailwind CSS** for responsive styling
-- **Lucide React** for beautiful icons
+3. **Generate Content**
+   - Choose between quick generation or research-enhanced writing
+   - Monitor real-time progress with stop/resume controls
+   - Content automatically saves as it's generated
 
-### Backend & Services
-- **Supabase** for database, authentication, and real-time features
-- **Google Gemini API** for AI content generation
-- **Perplexity AI** for research and fact-checking
-- **OpenAI DALL-E** for cover image generation
+4. **Edit and Refine**
+   - Use the built-in editor for final touches
+   - Make adjustments to tone, style, or content
+   - Generate alternative versions if needed
 
-### Libraries & Tools
-- **jsPDF** for PDF generation
-- **JSZip** for EPUB and audiobook packaging
-- **Web Speech API** for text-to-speech
-- **UUID** for unique identifiers
-- **File-saver** for download functionality
+5. **Publish and Share**
+   - Export to PDF or EPUB formats
+   - Create audiobook versions with customizable voices
+   - Generate professional cover art
+
+### Advanced Features
+
+#### Content Generation Control
+- **Stop/Resume**: Pause generation at any time, make adjustments, then continue
+- **Progress Tracking**: Visual progress bars and status indicators
+- **Batch Operations**: Generate all chapters or individual sections
+
+#### Romance Writing Tools
+- **Heat Level Conversion**: Transform existing content to different heat levels
+- **Perspective Options**: Switch between first/third person narratives
+- **Tone Adaptation**: Adjust writing style for different audiences
+
+#### Export Options
+- **PDF Export**: Professional formatting with cover art
+- **EPUB Creation**: eBook format compatible with all readers  
+- **Audiobook Generation**: Multiple voice options and speed controls
+- **Cover Art**: AI-generated covers matching your book's theme
 
 ## 📁 Project Structure
 
 ```
 src/
-├── components/           # React components
-│   ├── AudioUnstackerator.tsx
-│   ├── BookEditor.tsx
-│   ├── BookPrompt.tsx
-│   ├── BookSidebar.tsx
-│   ├── ChapterView.tsx
-│   ├── OutlineView.tsx
-│   ├── PersonaManagement.tsx
-│   └── UserSettings.tsx
-├── services/            # API and business logic
-│   ├── bookService.ts
-│   ├── contentService.ts
-│   ├── coverService.ts
-│   ├── exportService.ts
-│   ├── geminiService.ts
-│   ├── personaService.ts
-│   ├── perplexityService.ts
-│   ├── ttsService.ts
-│   └── userService.ts
-├── types/               # TypeScript type definitions
-├── lib/                 # Configuration and utilities
-└── App.tsx             # Main application component
+├── components/          # React components
+│   ├── AuthWrapper.tsx     # Supabase authentication
+│   ├── BookPrompt.tsx      # Initial book creation form
+│   ├── OutlineView.tsx     # Book outline management
+│   ├── ChapterView.tsx     # Individual chapter editing
+│   ├── BookEditor.tsx      # Full book editing interface
+│   ├── BookSidebar.tsx     # Navigation and book management
+│   └── AudiobookGenerator.tsx # TTS audiobook creation
+├── services/            # Business logic services
+│   ├── bookService.ts      # Supabase CRUD operations
+│   ├── contentService.ts   # AI content generation logic
+│   ├── geminiService.ts    # Google Gemini API integration
+│   ├── perplexityService.ts # Perplexity API research
+│   ├── ttsService.ts       # Text-to-speech generation
+│   ├── exportService.ts    # PDF/EPUB export functionality
+│   └── coverService.ts     # AI cover art generation
+├── lib/                 # Core utilities
+│   ├── supabase.ts         # Supabase client setup
+│   ├── auth.ts             # Authentication utilities
+│   └── database.ts         # Database types and schemas
+├── types/               # TypeScript definitions
+│   └── index.ts            # Core data models
+└── App.tsx              # Main application component
 ```
 
-## 🎯 Usage Guide
+## 🔐 Environment Variables
 
-### Creating Your First Book
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL | Yes |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
+| `VITE_GEMINI_API_KEY` | Google Gemini API key | Yes |
+| `VITE_PERPLEXITY_API_KEY` | Perplexity API key | Yes |
 
-1. **Start with a Prompt**
-   - Enter a book idea or detailed description
-   - Select genre, sub-genre, and target audience
-   - Choose writing perspective and tone
-   - For romance: Set appropriate heat level
+## 🧪 Development
 
-2. **Review the Outline**
-   - AI generates a complete chapter structure
-   - Edit chapter titles and descriptions as needed
-   - Add or remove chapters to fit your vision
+### Available Scripts
 
-3. **Generate Content**
-   - Click "Generate All Content" for full automation
-   - Or generate chapters individually for more control
-   - Monitor progress with real-time updates
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Create production build
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint for code quality checks
 
-4. **Edit and Refine**
-   - Use the built-in editor to polish content
-   - Adjust tone, style, and pacing
-   - Add personal touches and unique elements
+### Key Development Features
 
-5. **Export Your Book**
-   - Choose from PDF, EPUB, or audiobook formats
-   - Generate professional covers
-   - Download ready-to-publish files
+- **Hot Module Replacement**: Instant updates during development
+- **TypeScript Integration**: Full type safety and IntelliSense
+- **ESLint Configuration**: Consistent code style enforcement
+- **Responsive Design**: Mobile-first Tailwind CSS approach
 
-### Working with Writing Personas
+## 🚀 Deployment
 
-1. **Create Personas**
-   - Manual creation with detailed style attributes
-   - AI analysis of existing writing samples
-   - Define genre specialties and characteristics
+### Vercel (Recommended)
+1. Connect your GitHub repository to Vercel
+2. Configure environment variables in Vercel dashboard
+3. Deploy automatically on every push to main
 
-2. **Apply to Books**
-   - Select personas during book creation
-   - Maintain consistent voice across chapters
-   - Switch personas for different projects
-
-3. **Manage Collection**
-   - Search and filter personas
-   - Mark favorites for quick access
-   - Export/import for sharing or backup
-
-### Generating Audiobooks
-
-1. **Select Voice**
-   - AI recommends optimal voices based on content
-   - Preview voices with sample text
-   - Choose from male, female, or neutral options
-
-2. **Generate Audio**
-   - Process entire book or individual chapters
-   - Monitor progress with real-time updates
-   - Preview audio before finalizing
-
-3. **Export Package**
-   - Download complete audiobook with metadata
-   - Includes playlist files for media players
-   - Professional packaging for distribution
-
-## 🔧 Configuration
-
-### API Keys Setup
-
-Add your API keys in the user settings:
-
-- **Google Gemini**: Required for content generation
-- **Perplexity AI**: Optional, for enhanced research
-- **OpenAI**: Optional, for cover generation
-
-### Supabase Configuration
-
-Ensure your Supabase project has:
-- Row Level Security (RLS) enabled
-- Proper authentication policies
-- Database migrations applied
+### Manual Deployment
+1. Build the project: `npm run build`
+2. Deploy the `dist` folder to your hosting provider
+3. Configure environment variables on your hosting platform
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Workflow
-
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-### Code Style
+### Development Guidelines
 
-- Use TypeScript for all new code
-- Follow existing naming conventions
-- Add JSDoc comments for public functions
-- Use Prettier for code formatting
+- Follow TypeScript strict mode requirements
+- Use functional components with hooks
+- Maintain consistent code formatting with ESLint
+- Test functionality across different browsers
+- Document new features and API changes
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
-
-- **Documentation**: Check our [Wiki](https://github.com/your-username/Unstack/wiki)
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/your-username/Unstack/issues)
-- **Discussions**: Join our [GitHub Discussions](https://github.com/your-username/Unstack/discussions)
-
-## 🗺️ Roadmap
-
-### Upcoming Features
-- [ ] Collaborative editing
-- [ ] Advanced style templates
-- [ ] Multi-language support
-- [ ] Publishing platform integrations
-- [ ] Advanced analytics and insights
-- [ ] Mobile app development
-
-### Recent Updates
-- ✅ Writing personas system
-- ✅ Export/import functionality
-- ✅ Audiobook generation
-- ✅ Professional PDF/EPUB export
-- ✅ AI cover generation
-
 ## 🙏 Acknowledgments
 
-- Google Gemini for powerful AI content generation
-- Supabase for excellent backend infrastructure
-- The open-source community for amazing tools and libraries
-- All contributors and users who make this project possible
+- **Google Gemini** - Advanced AI content generation
+- **Perplexity** - Intelligent research and fact-checking
+- **Supabase** - Backend-as-a-service platform
+- **Tailwind CSS** - Utility-first CSS framework
+- **Lucide** - Beautiful & consistent icon library
+
+## 📞 Support
+
+For support, questions, or feature requests:
+- Open an issue on [GitHub Issues](https://github.com/yourusername/bookgen/issues)
+- Check the [Documentation](https://github.com/yourusername/bookgen/wiki)
+- Join our [Discord Community](https://discord.gg/bookgen)
 
 ---
-# unstacklife
-# unstacklife
+
+**BookGen** - Transform your ideas into professional books and audiobooks with the power of AI. ✨📚🎧

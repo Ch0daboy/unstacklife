@@ -13,10 +13,15 @@ interface GeminiResponse {
   }[];
 }
 
-const callGeminiAPI = async (prompt: string, apiKey: string): Promise<string> => {
+const callGeminiAPI = async (prompt: string, apiKey: string, isCancelledFn?: () => boolean): Promise<string> => {
   const maxRetries = 5;
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // Check for cancellation before each attempt
+    if (isCancelledFn && isCancelledFn()) {
+      throw new Error('Generation cancelled');
+    }
+
     try {
       const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
         method: 'POST',
@@ -298,7 +303,8 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
 export const generateContent = async (
   sectionTitle: string,
   sectionDescription: string,
-  apiKey: string
+  apiKey: string,
+  isCancelledFn?: () => boolean
 ): Promise<string> => {
   const prompt = `
 Write comprehensive, high-quality content for the following section:
@@ -313,7 +319,7 @@ Requirements:
 Please write the content now:
 `;
 
-  const response = await callGeminiAPI(prompt, apiKey);
+  const response = await callGeminiAPI(prompt, apiKey, isCancelledFn);
   return response.trim();
 };
 

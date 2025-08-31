@@ -16,6 +16,7 @@ function App() {
   const [book, setBook] = useState<Book | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<BookChapter | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
   
   // Handle OAuth callback
   useEffect(() => {
@@ -85,6 +86,7 @@ function App() {
       if (fullBook) {
         setBook(fullBook);
         setSelectedChapter(null);
+        setIsCancelled(false);
         // Check if we're in edit mode from URL hash
         const hash = window.location.hash;
         if (hash.startsWith('#edit/')) {
@@ -104,6 +106,7 @@ function App() {
     setBook(null);
     setSelectedChapter(null);
     setCurrentStep('prompt');
+    setIsCancelled(false);
     setSidebarOpen(false);
   };
 
@@ -191,6 +194,9 @@ function App() {
                     saveBookToDatabase(updatedBook);
                   }}
                   apiKeys={apiKeys}
+                  isCancelled={isCancelled}
+                  onCancel={() => setIsCancelled(true)}
+                  onResume={() => setIsCancelled(false)}
                 />
               )}
 
@@ -200,6 +206,9 @@ function App() {
                   onBack={handleBackToOutline}
                   onUpdateChapter={handleUpdateChapter}
                   apiKeys={apiKeys}
+                  isCancelled={isCancelled}
+                  onCancel={() => setIsCancelled(true)}
+                  onResume={() => setIsCancelled(false)}
                 />
               )}
 

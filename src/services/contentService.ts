@@ -6,11 +6,22 @@ import { v4 as uuidv4 } from 'uuid';
 export const researchAndGenerate = async (
   title: string,
   description: string,
-  apiKeys: {gemini: string; perplexity: string}
+  apiKeys: {gemini: string; perplexity: string},
+  isCancelledFn?: () => boolean
 ): Promise<string> => {
+  // Check if cancelled before starting research
+  if (isCancelledFn && isCancelledFn()) {
+    throw new Error('Generation cancelled');
+  }
+
   // First, research the topic
   const researchData = await researchTopic(title, description, apiKeys.perplexity);
   
+  // Check if cancelled after research
+  if (isCancelledFn && isCancelledFn()) {
+    throw new Error('Generation cancelled');
+  }
+
   // Then generate content based on research
   const enhancedDescription = `${description}
 
@@ -19,17 +30,23 @@ ${researchData}
 
 Use the above research to create comprehensive, well-informed content.`;
   
-  return await generateContent(title, enhancedDescription, apiKeys.gemini);
+  return await generateContent(title, enhancedDescription, apiKeys.gemini, isCancelledFn);
 };
 
 export const generateAllContent = async (
   book: Book,
   geminiApiKey: string,
-  onProgress: (book: Book) => void
+  onProgress: (book: Book) => void,
+  isCancelledFn?: () => boolean
 ): Promise<Book> => {
   let updatedBook = { ...book };
 
   for (let i = 0; i < updatedBook.chapters.length; i++) {
+    // Check for cancellation at chapter level
+    if (isCancelledFn && isCancelledFn()) {
+      throw new Error('Generation cancelled');
+    }
+
     const chapter = updatedBook.chapters[i];
     
     // Generate chapter outline if not exists
@@ -42,6 +59,11 @@ export const generateAllContent = async (
     // Generate content for each sub-chapter
     if (chapter.subChapters) {
       for (let j = 0; j < chapter.subChapters.length; j++) {
+        // Check for cancellation at subchapter level
+        if (isCancelledFn && isCancelledFn()) {
+          throw new Error('Generation cancelled');
+        }
+
         const subChapter = chapter.subChapters[j];
         
         // Update status to generating
@@ -49,7 +71,7 @@ export const generateAllContent = async (
         onProgress({ ...updatedBook });
         
         // Generate content
-        const content = await generateContent(subChapter.title, subChapter.description, geminiApiKey);
+        const content = await generateContent(subChapter.title, subChapter.description, geminiApiKey, isCancelledFn);
         subChapter.content = content;
         subChapter.status = 'completed';
         
@@ -70,11 +92,17 @@ export const generateAllContent = async (
 export const generateAllContentWithResearch = async (
   book: Book,
   apiKeys: {gemini: string; perplexity: string},
-  onProgress: (book: Book) => void
+  onProgress: (book: Book) => void,
+  isCancelledFn?: () => boolean
 ): Promise<Book> => {
   let updatedBook = { ...book };
 
   for (let i = 0; i < updatedBook.chapters.length; i++) {
+    // Check for cancellation at chapter level
+    if (isCancelledFn && isCancelledFn()) {
+      throw new Error('Generation cancelled');
+    }
+
     const chapter = updatedBook.chapters[i];
     
     // Generate chapter outline if not exists
@@ -87,6 +115,11 @@ export const generateAllContentWithResearch = async (
     // Generate content for each sub-chapter with research
     if (chapter.subChapters) {
       for (let j = 0; j < chapter.subChapters.length; j++) {
+        // Check for cancellation at subchapter level
+        if (isCancelledFn && isCancelledFn()) {
+          throw new Error('Generation cancelled');
+        }
+
         const subChapter = chapter.subChapters[j];
         
         // Update status to generating
@@ -94,7 +127,7 @@ export const generateAllContentWithResearch = async (
         onProgress({ ...updatedBook });
         
         // Research and generate content
-        const content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys);
+        const content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, isCancelledFn);
         subChapter.content = content;
         subChapter.status = 'completed';
         

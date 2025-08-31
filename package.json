@@ -20,7 +20,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "uuid": "^11.1.0",
-    "vercel": "^45.0.9"
+    "vercel": "^25.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
