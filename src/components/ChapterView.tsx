@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, FileText, Play, Search, CheckCircle, Square } from 'lucide-react';
 import { BookChapter, SubChapter } from '../types';
-import { generateChapterOutline, generateContent } from '../services/geminiService';
-import { researchAndGenerate } from '../services/contentService';
+import { 
+  generateChapterOutline, 
+  generateContent, 
+  researchAndGenerate 
+} from '../services/aiServiceRouter';
 
 interface ChapterViewProps {
   chapter: BookChapter;

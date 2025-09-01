@@ -1,12 +1,13 @@
 import { Book, BookChapter, SubChapter } from '../types';
-import { generateChapterOutline, generateContent, generateContentWithHeatLevel } from './geminiService';
+import * as aiRouter from './aiServiceRouter';
+import * as bedrockService from './bedrockService';
 import { researchTopic } from './perplexityService';
 import { v4 as uuidv4 } from 'uuid';
 
 export const researchAndGenerate = async (
   title: string,
   description: string,
-  apiKeys: {gemini: string; perplexity: string},
+  apiKeys: {bedrock?: any; gemini?: string; perplexity?: string},
   isCancelledFn?: () => boolean
 ): Promise<string> => {
   // Check if cancelled before starting research
@@ -15,7 +16,7 @@ export const researchAndGenerate = async (
   }
 
   // First, research the topic
-  const researchData = await researchTopic(title, description, apiKeys.perplexity);
+  const researchData = await researchTopic(title, description, apiKeys.perplexity!);
   
   // Check if cancelled after research
   if (isCancelledFn && isCancelledFn()) {
@@ -30,12 +31,13 @@ ${researchData}
 
 Use the above research to create comprehensive, well-informed content.`;
   
-  return await generateContent(title, enhancedDescription, apiKeys.gemini, isCancelledFn);
+  const result = await aiRouter.generateContent(title, enhancedDescription, apiKeys, isCancelledFn);
+  return result.result;
 };
 
 export const generateAllContent = async (
   book: Book,
-  geminiApiKey: string,
+  apiKeys: any,
   onProgress: (book: Book) => void,
   isCancelledFn?: () => boolean
 ): Promise<Book> => {
@@ -51,8 +53,8 @@ export const generateAllContent = async (
     
     // Generate chapter outline if not exists
     if (!chapter.subChapters) {
-      const outline = await generateChapterOutline(chapter.title, chapter.description, geminiApiKey);
-      chapter.subChapters = outline;
+      const outlineResult = await aiRouter.generateChapterOutline(chapter.title, chapter.description, apiKeys);
+      chapter.subChapters = outlineResult.result;
       onProgress({ ...updatedBook });
     }
 
@@ -71,8 +73,8 @@ export const generateAllContent = async (
         onProgress({ ...updatedBook });
         
         // Generate content
-        const content = await generateContent(subChapter.title, subChapter.description, geminiApiKey, isCancelledFn);
-        subChapter.content = content;
+        const contentResult = await aiRouter.generateContent(subChapter.title, subChapter.description, apiKeys, isCancelledFn);
+        subChapter.content = contentResult.result;
         subChapter.status = 'completed';
         
         onProgress({ ...updatedBook });
@@ -91,7 +93,7 @@ export const generateAllContent = async (
 
 export const generateAllContentWithResearch = async (
   book: Book,
-  apiKeys: {gemini: string; perplexity: string},
+  apiKeys: {bedrock?: any; gemini?: string; perplexity?: string},
   onProgress: (book: Book) => void,
   isCancelledFn?: () => boolean
 ): Promise<Book> => {
@@ -107,8 +109,8 @@ export const generateAllContentWithResearch = async (
     
     // Generate chapter outline if not exists
     if (!chapter.subChapters) {
-      const outline = await generateChapterOutline(chapter.title, chapter.description, apiKeys.gemini);
-      chapter.subChapters = outline;
+      const outlineResult = await aiRouter.generateChapterOutline(chapter.title, chapter.description, apiKeys);
+      chapter.subChapters = outlineResult.result;
       onProgress({ ...updatedBook });
     }
 
@@ -148,7 +150,7 @@ export const generateAllContentWithResearch = async (
 export const convertRomanceHeatLevel = async (
   originalBook: Book,
   newHeatLevel: string,
-  apiKeys: {gemini: string; perplexity: string},
+  apiKeys: {bedrock?: any; gemini?: string; perplexity?: string},
   onProgress: (book: Book) => void
 ): Promise<Book> => {
   // Create a new book with updated heat level
@@ -197,14 +199,39 @@ export const convertRomanceHeatLevel = async (
         subChapter.status = 'generating';
         onProgress({ ...newBook });
         
-        // Generate content with new heat level context
-        const content = await generateContentWithHeatLevel(
-          subChapter.title, 
-          subChapter.description, 
-          newHeatLevel,
-          originalBook.perspective || '',
-          apiKeys.gemini
-        );
+        // Generate content with new heat level context using Bedrock or Gemini fallback
+        let content: string;
+        try {
+          if (apiKeys.bedrock?.accessKeyId) {
+            content = await bedrockService.generateContentWithHeatLevel(
+              subChapter.title,
+              subChapter.description,
+              newHeatLevel,
+              originalBook.perspective || '',
+              apiKeys.bedrock
+            );
+          } else {
+            // Import geminiService if Bedrock not available
+            const { generateContentWithHeatLevel } = await import('./geminiService');
+            content = await generateContentWithHeatLevel(
+              subChapter.title,
+              subChapter.description,
+              newHeatLevel,
+              originalBook.perspective || '',
+              apiKeys.gemini!
+            );
+          }
+        } catch (error) {
+          // Fallback to Gemini if Bedrock fails
+          const { generateContentWithHeatLevel } = await import('./geminiService');
+          content = await generateContentWithHeatLevel(
+            subChapter.title,
+            subChapter.description,
+            newHeatLevel,
+            originalBook.perspective || '',
+            apiKeys.gemini!
+          );
+        }
         
         subChapter.content = content;
         subChapter.status = 'completed';

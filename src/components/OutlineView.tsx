@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3, Volume2, Square } from 'lucide-react';
 import { Book, BookChapter, AudiobookData } from '../types';
-import { generateAllContent, generateAllContentWithResearch, convertRomanceHeatLevel } from '../services/contentService';
+import { 
+  generateAllContent, 
+  generateAllContentWithResearch, 
+  convertRomanceHeatLevel 
+} from '../services/aiServiceRouter';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
 import { generateBookCover, generateBookCoverWithDALLE } from '../services/coverService';
 import AudiobookGenerator from './AudiobookGenerator';
@@ -57,7 +61,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({
           onUpdateBook(progress);
         }, () => isCancelled);
       } else {
-        updatedBook = await generateAllContent(updatedBook, apiKeys.gemini, (progress) => {
+        updatedBook = await generateAllContent(updatedBook, apiKeys, (progress) => {
           onUpdateBook(progress);
         }, () => isCancelled);
       }
