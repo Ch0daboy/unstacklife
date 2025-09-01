@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Settings } from 'lucide-react';
 import AuthWrapper from './components/AuthWrapper';
 import { supabase } from './lib/supabase';
 import BookSidebar from './components/BookSidebar';
@@ -8,8 +8,10 @@ import BookPrompt from './components/BookPrompt';
 import OutlineView from './components/OutlineView';
 import ChapterView from './components/ChapterView';
 import BookEditor from './components/BookEditor';
+import AIConfigPanel from './components/AIConfigPanel';
 import { Book, BookChapter, SubChapter } from './types';
 import { saveBook, loadBook } from './services/bookService';
+import { getAIConfig, isLocalAIEnabled, getApiKeys } from './config/aiConfig';
 
 function App() {
   const [currentStep, setCurrentStep] = useState<'prompt' | 'outline' | 'chapter' | 'edit'>('prompt');
@@ -17,6 +19,7 @@ function App() {
   const [selectedChapter, setSelectedChapter] = useState<BookChapter | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
+  const [showAIConfig, setShowAIConfig] = useState(false);
   
   // Handle OAuth callback
   useEffect(() => {
@@ -30,10 +33,8 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const apiKeys = {
-    gemini: import.meta.env.VITE_GEMINI_API_KEY || '',
-    perplexity: import.meta.env.VITE_PERPLEXITY_API_KEY || ''
-  };
+  // Get API keys based on current AI configuration
+  const apiKeys = getApiKeys();
 
   const handleBookGenerated = (generatedBook: Book) => {
     saveBookToDatabase(generatedBook);
@@ -166,10 +167,26 @@ function App() {
                     className="h-10 w-auto"
                   />
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Unstack</h1>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-2xl font-bold text-gray-800">Unstack</h1>
+                      {isLocalAIEnabled() && (
+                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full font-medium">
+                          Local AI Mode
+                        </span>
+                      )}
+                    </div>
                     <p className="text-gray-600 hidden sm:block">Create comprehensive eBooks with AI-powered research and generation</p>
                   </div>
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowAIConfig(!showAIConfig)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                  title="AI Configuration"
+                >
+                  <Settings className="w-5 h-5 text-gray-600" />
+                </button>
               </div>
             </div>
           </header>
@@ -226,6 +243,12 @@ function App() {
             </div>
           </main>
         </div>
+
+        {/* AI Configuration Panel */}
+        <AIConfigPanel 
+          isOpen={showAIConfig}
+          onClose={() => setShowAIConfig(false)}
+        />
       </div>
     </AuthWrapper>
   );

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BookGen is a React/TypeScript web application that generates AI-powered books and audiobooks. It uses Supabase for authentication and data storage, with AI services from Gemini and Perplexity for content generation. The app supports multi-step book creation (prompt → outline → chapter writing → editing) and audiobook generation with TTS.
+BookGen is a React/TypeScript web application that generates AI-powered books and audiobooks. It uses Supabase for authentication and data storage, with AI services from Amazon Bedrock (primary) and Gemini (fallback) plus Perplexity for content generation. The app supports multi-step book creation (prompt → outline → chapter writing → editing) and audiobook generation with TTS.
 
 ## Development Commands
 
@@ -17,8 +17,14 @@ BookGen is a React/TypeScript web application that generates AI-powered books an
 ### Environment Setup
 Create a `.env` file with:
 ```env
+# Supabase Configuration
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# AI Services (Bedrock Primary, Gemini Fallback)
+VITE_AWS_ACCESS_KEY_ID=your_aws_access_key_id
+VITE_AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+VITE_AWS_REGION=us-east-1
 VITE_GEMINI_API_KEY=your_gemini_api_key
 VITE_PERPLEXITY_API_KEY=your_perplexity_api_key
 ```
@@ -44,11 +50,13 @@ src/
 │   ├── BookSidebar.tsx     # Navigation sidebar
 │   ├── AudiobookGenerator.tsx # TTS audiobook generation
 │   └── [others]
-├── services/          # Business logic services (9 files)
+├── services/          # Business logic services (12+ files)
 │   ├── bookService.ts      # Supabase book CRUD operations
-│   ├── contentService.ts   # AI content generation logic
-│   ├── geminiService.ts    # Google Gemini API integration
-│   ├── perplexityService.ts # Perplexity API integration
+│   ├── contentService.ts   # AI content generation logic  
+│   ├── aiServiceRouter.ts  # AI service routing (Bedrock primary, Gemini fallback)
+│   ├── bedrockService.ts   # Amazon Bedrock API integration (primary AI)
+│   ├── geminiService.ts    # Google Gemini API integration (fallback AI)
+│   ├── perplexityService.ts # Perplexity API integration (research)
 │   ├── ttsService.ts       # Text-to-speech audiobook generation
 │   ├── exportService.ts    # PDF/ZIP export functionality
 │   └── [others]
@@ -82,7 +90,8 @@ Core types defined in `src/types/index.ts`:
 - Protected routes require authenticated users
 
 ### AI Integration
-- **Gemini API** - Primary content generation service
+- **Amazon Bedrock** - Primary content generation service with Claude 3.5 Sonnet
+- **Gemini API** - Fallback content generation service
 - **Perplexity API** - Research and fact-checking
 - **Web Speech API** - Browser-native TTS for audiobooks
 - Content generation supports multiple genres, tones, perspectives

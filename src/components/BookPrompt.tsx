@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { BookOpen, Sparkles, Wand2 } from 'lucide-react';
-import { generateBookOutline } from '../services/geminiService';
+import { generateBookOutline, AICredentials } from '../services/aiServiceRouter';
 import { Book } from '../types';
 import { getUserProfile } from '../services/userService';
 
 interface BookPromptProps {
   onBookGenerated: (book: Book) => void;
-  apiKeys: {gemini: string; perplexity: string};
+  apiKeys: AICredentials;
 }
 
 const GENRES = [
@@ -229,8 +229,8 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
 
     setIsGenerating(true);
     try {
-      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, apiKeys.gemini);
-      onBookGenerated(book);
+      const result = await generateBookOutline(prompt, genre, '', targetAudience, heatLevel, perspective, author, apiKeys);
+      onBookGenerated(result.result);
     } catch (error) {
       console.error('Error generating book outline:', error);
       alert('Failed to generate book outline. Please check your API key and try again.');

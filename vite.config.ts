@@ -7,4 +7,20 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  build: {
+    rollupOptions: {
+      external: [
+        // Exclude Node.js-only services from browser build
+        /^node:/,
+        'child_process',
+        'util',
+        'fs',
+        'path'
+      ]
+    }
+  },
+  define: {
+    // Make sure Node.js globals are not available in browser
+    global: 'globalThis',
+  }
 });
