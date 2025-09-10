@@ -28,7 +28,25 @@ export const saveBook = async (book: Book): Promise<Book> => {
     .select()
     .single();
 
-  if (bookError) throw bookError;
+  if (bookError) {
+    console.error('Book save error:', bookError);
+    console.error('Book data being saved:', {
+      id: book.id,
+      user_id: user.id,
+      title: book.title,
+      author: book.author,
+      description: book.description,
+      genre: book.genre,
+      sub_genre: book.subGenre,
+      tone: book.tone,
+      heat_level: book.heatLevel,
+      perspective: book.perspective,
+      target_audience: book.targetAudience,
+      cover_url: book.coverUrl,
+      status: book.status
+    });
+    throw bookError;
+  }
 
   // Save chapters
   if (book.chapters && book.chapters.length > 0) {
@@ -45,7 +63,11 @@ export const saveBook = async (book: Book): Promise<Book> => {
       .from('chapters')
       .upsert(chaptersToInsert);
 
-    if (chaptersError) throw chaptersError;
+    if (chaptersError) {
+      console.error('Chapters save error:', chaptersError);
+      console.error('Chapters data being saved:', chaptersToInsert);
+      throw chaptersError;
+    }
 
     // Save sub-chapters
     const subChaptersToInsert: any[] = [];
@@ -70,7 +92,11 @@ export const saveBook = async (book: Book): Promise<Book> => {
         .from('sub_chapters')
         .upsert(subChaptersToInsert);
 
-      if (subChaptersError) throw subChaptersError;
+      if (subChaptersError) {
+        console.error('Sub-chapters save error:', subChaptersError);
+        console.error('Sub-chapters data being saved:', subChaptersToInsert);
+        throw subChaptersError;
+      }
     }
   }
 

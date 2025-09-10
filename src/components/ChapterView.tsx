@@ -55,9 +55,8 @@ const ChapterView: React.FC<ChapterViewProps> = ({
     if (isCancelled) return;
 
     const updatedSubChapter = { ...subChapter, status: 'generating' as const };
-    const updatedSubChapters = localChapter.subChapters?.map(sc => 
-      sc.id === subChapter.id ? updatedSubChapter : sc
-    ) || [];
+    const updatedSubChapters = (Array.isArray(localChapter.subChapters) ? localChapter.subChapters : [])
+      .map(sc => sc.id === subChapter.id ? updatedSubChapter : sc);
     
     const updatedChapter = { ...localChapter, subChapters: updatedSubChapters };
     setLocalChapter(updatedChapter);
@@ -75,9 +74,8 @@ const ChapterView: React.FC<ChapterViewProps> = ({
       // Check if cancelled during generation
       if (isCancelled) {
         const cancelledSubChapter = { ...subChapter, status: 'pending' as const };
-        const cancelledSubChapters = localChapter.subChapters?.map(sc => 
-          sc.id === subChapter.id ? cancelledSubChapter : sc
-        ) || [];
+        const cancelledSubChapters = (Array.isArray(localChapter.subChapters) ? localChapter.subChapters : [])
+          .map(sc => sc.id === subChapter.id ? cancelledSubChapter : sc);
         
         const cancelledChapter = { ...localChapter, subChapters: cancelledSubChapters };
         setLocalChapter(cancelledChapter);
@@ -91,9 +89,8 @@ const ChapterView: React.FC<ChapterViewProps> = ({
         status: 'completed' as const 
       };
       
-      const finalSubChapters = localChapter.subChapters?.map(sc => 
-        sc.id === subChapter.id ? completedSubChapter : sc
-      ) || [];
+      const finalSubChapters = (Array.isArray(localChapter.subChapters) ? localChapter.subChapters : [])
+        .map(sc => sc.id === subChapter.id ? completedSubChapter : sc);
       
       const finalChapter = { ...localChapter, subChapters: finalSubChapters };
       setLocalChapter(finalChapter);
@@ -106,9 +103,8 @@ const ChapterView: React.FC<ChapterViewProps> = ({
       
       // Reset status on error
       const resetSubChapter = { ...subChapter, status: 'pending' as const };
-      const resetSubChapters = localChapter.subChapters?.map(sc => 
-        sc.id === subChapter.id ? resetSubChapter : sc
-      ) || [];
+      const resetSubChapters = (Array.isArray(localChapter.subChapters) ? localChapter.subChapters : [])
+        .map(sc => sc.id === subChapter.id ? resetSubChapter : sc);
       
       const resetChapter = { ...localChapter, subChapters: resetSubChapters };
       setLocalChapter(resetChapter);
@@ -157,7 +153,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({
       )}
 
       {/* Sub-chapters */}
-      {localChapter.subChapters && (
+      {localChapter.subChapters && Array.isArray(localChapter.subChapters) && (
         <div className="space-y-4">
           {localChapter.subChapters.map((subChapter, index) => (
             <div key={subChapter.id} className="bg-white rounded-xl shadow-lg">
