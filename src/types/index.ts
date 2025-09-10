@@ -3,6 +3,7 @@ export interface SubChapter {
   title: string;
   description: string;
   content?: string;
+  imageUrl?: string;
   status: 'pending' | 'generating' | 'completed';
 }
 
@@ -11,6 +12,7 @@ export interface BookChapter {
   title: string;
   description: string;
   subChapters?: SubChapter[];
+  imageUrl?: string;
   status: 'pending' | 'generating' | 'completed';
   expanded?: boolean;
 }
@@ -56,4 +58,11 @@ export interface VoiceOption {
   gender: 'male' | 'female' | 'neutral';
   language: string;
   isRecommended?: boolean;
+}
+
+export interface ImageGenerationOptions {
+  generateCoverImage?: boolean;
+  generateChapterImages?: boolean;
+  quality?: 'standard' | 'premium';
+  region?: string;
 }

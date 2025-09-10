@@ -1,12 +1,13 @@
 import { Book, BookChapter, SubChapter } from '../types';
-import { generateChapterOutline, generateContent, generateContentWithHeatLevel } from './geminiService';
+import { generateChapterOutline, generateContent, generateContentWithHeatLevel } from './bedrockService';
 import { researchTopic } from './perplexityService';
 import { v4 as uuidv4 } from 'uuid';
 
 export const researchAndGenerate = async (
   title: string,
   description: string,
-  apiKeys: {gemini: string; perplexity: string},
+  apiKeys: {perplexity: string},
+  region: string = 'us-east-1',
   isCancelledFn?: () => boolean
 ): Promise<string> => {
   // Check if cancelled before starting research
@@ -30,12 +31,12 @@ ${researchData}
 
 Use the above research to create comprehensive, well-informed content.`;
   
-  return await generateContent(title, enhancedDescription, apiKeys.gemini, isCancelledFn);
+  return await generateContent(title, enhancedDescription, region, isCancelledFn);
 };
 
 export const generateAllContent = async (
   book: Book,
-  geminiApiKey: string,
+  region: string = 'us-east-1',
   onProgress: (book: Book) => void,
   isCancelledFn?: () => boolean
 ): Promise<Book> => {
@@ -51,7 +52,7 @@ export const generateAllContent = async (
     
     // Generate chapter outline if not exists
     if (!chapter.subChapters) {
-      const outline = await generateChapterOutline(chapter.title, chapter.description, geminiApiKey);
+      const outline = await generateChapterOutline(chapter.title, chapter.description, region);
       chapter.subChapters = outline;
       onProgress({ ...updatedBook });
     }
@@ -71,7 +72,7 @@ export const generateAllContent = async (
         onProgress({ ...updatedBook });
         
         // Generate content
-        const content = await generateContent(subChapter.title, subChapter.description, geminiApiKey, isCancelledFn);
+        const content = await generateContent(subChapter.title, subChapter.description, region, isCancelledFn);
         subChapter.content = content;
         subChapter.status = 'completed';
         
@@ -91,7 +92,8 @@ export const generateAllContent = async (
 
 export const generateAllContentWithResearch = async (
   book: Book,
-  apiKeys: {gemini: string; perplexity: string},
+  apiKeys: {perplexity: string},
+  region: string = 'us-east-1',
   onProgress: (book: Book) => void,
   isCancelledFn?: () => boolean
 ): Promise<Book> => {
@@ -107,7 +109,7 @@ export const generateAllContentWithResearch = async (
     
     // Generate chapter outline if not exists
     if (!chapter.subChapters) {
-      const outline = await generateChapterOutline(chapter.title, chapter.description, apiKeys.gemini);
+      const outline = await generateChapterOutline(chapter.title, chapter.description, region);
       chapter.subChapters = outline;
       onProgress({ ...updatedBook });
     }
@@ -127,7 +129,7 @@ export const generateAllContentWithResearch = async (
         onProgress({ ...updatedBook });
         
         // Research and generate content
-        const content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, isCancelledFn);
+        const content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, region, isCancelledFn);
         subChapter.content = content;
         subChapter.status = 'completed';
         
@@ -148,7 +150,7 @@ export const generateAllContentWithResearch = async (
 export const convertRomanceHeatLevel = async (
   originalBook: Book,
   newHeatLevel: string,
-  apiKeys: {gemini: string; perplexity: string},
+  region: string = 'us-east-1',
   onProgress: (book: Book) => void
 ): Promise<Book> => {
   // Create a new book with updated heat level
@@ -203,7 +205,7 @@ export const convertRomanceHeatLevel = async (
           subChapter.description, 
           newHeatLevel,
           originalBook.perspective || '',
-          apiKeys.gemini
+          region
         );
         
         subChapter.content = content;

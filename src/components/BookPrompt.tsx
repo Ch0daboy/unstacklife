@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { BookOpen, Sparkles, Wand2 } from 'lucide-react';
-import { generateBookOutline } from '../services/geminiService';
+import { generateBookOutline } from '../services/bedrockService';
 import { Book } from '../types';
 import { getUserProfile } from '../services/userService';
 
 interface BookPromptProps {
   onBookGenerated: (book: Book) => void;
-  apiKeys: {gemini: string; perplexity: string};
+  region?: string;
 }
 
 const GENRES = [
@@ -57,7 +57,7 @@ const HEAT_LEVELS = [
   }
 ];
 
-const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => {
+const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, region }) => {
   const [prompt, setPrompt] = useState('');
   const [author, setAuthor] = useState('');
   const [genre, setGenre] = useState('');
@@ -229,7 +229,7 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
 
     setIsGenerating(true);
     try {
-      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, apiKeys.gemini);
+      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, region || 'us-east-1');
       onBookGenerated(book);
     } catch (error) {
       console.error('Error generating book outline:', error);

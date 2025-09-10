@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BookGen is a React/TypeScript web application that generates AI-powered books and audiobooks. It uses Supabase for authentication and data storage, with AI services from Gemini and Perplexity for content generation. The app supports multi-step book creation (prompt → outline → chapter writing → editing) and audiobook generation with TTS.
+BookGen is a React/TypeScript web application that generates AI-powered books and audiobooks. It uses Supabase for authentication and data storage, with AI services from Amazon Bedrock (Claude 3.5 Haiku for text, Titan Image Generator v2 for images) and Perplexity for research. The app supports multi-step book creation (prompt → outline → chapter writing → editing) and audiobook generation with TTS.
 
 ## Development Commands
 
@@ -19,7 +19,8 @@ Create a `.env` file with:
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_AWS_ACCESS_KEY_ID=your_aws_access_key_id
+VITE_AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
 VITE_PERPLEXITY_API_KEY=your_perplexity_api_key
 ```
 
@@ -47,7 +48,7 @@ src/
 ├── services/          # Business logic services (9 files)
 │   ├── bookService.ts      # Supabase book CRUD operations
 │   ├── contentService.ts   # AI content generation logic
-│   ├── geminiService.ts    # Google Gemini API integration
+│   ├── bedrockService.ts    # Amazon Bedrock API integration
 │   ├── perplexityService.ts # Perplexity API integration
 │   ├── ttsService.ts       # Text-to-speech audiobook generation
 │   ├── exportService.ts    # PDF/ZIP export functionality

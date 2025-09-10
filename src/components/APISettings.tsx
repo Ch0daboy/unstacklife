@@ -2,28 +2,27 @@ import React, { useState } from 'react';
 import { Key, Zap } from 'lucide-react';
 
 interface APISettingsProps {
-  onAPIKeysSet: (keys: {gemini: string; perplexity: string}) => void;
+  onAPIKeysSet: (keys: {perplexity: string}) => void;
 }
 
 const APISettings: React.FC<APISettingsProps> = ({ onAPIKeysSet }) => {
-  const [geminiKey, setGeminiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY || '');
+  const [awsAccessKey, setAwsAccessKey] = useState(import.meta.env.VITE_AWS_ACCESS_KEY_ID || '');
+  const [awsSecretKey, setAwsSecretKey] = useState(import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || '');
   const [perplexityKey, setPerplexityKey] = useState(import.meta.env.VITE_PERPLEXITY_API_KEY || '');
 
   // Auto-submit if keys are available from environment
   React.useEffect(() => {
-    if (geminiKey && perplexityKey) {
+    if (awsAccessKey && awsSecretKey && perplexityKey) {
       onAPIKeysSet({
-        gemini: geminiKey,
         perplexity: perplexityKey
       });
     }
-  }, [geminiKey, perplexityKey, onAPIKeysSet]);
+  }, [awsAccessKey, awsSecretKey, perplexityKey, onAPIKeysSet]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (geminiKey.trim() && perplexityKey.trim()) {
+    if (awsAccessKey.trim() && awsSecretKey.trim() && perplexityKey.trim()) {
       onAPIKeysSet({
-        gemini: geminiKey.trim(),
         perplexity: perplexityKey.trim()
       });
     }
@@ -44,22 +43,37 @@ const APISettings: React.FC<APISettingsProps> = ({ onAPIKeysSet }) => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="gemini" className="block text-sm font-medium text-gray-700 mb-2">
-              Google Gemini API Key
+            <label htmlFor="awsAccessKey" className="block text-sm font-medium text-gray-700 mb-2">
+              AWS Access Key ID
             </label>
             <input
               type="password"
-              id="gemini"
-              value={geminiKey}
-              onChange={(e) => setGeminiKey(e.target.value)}
-              placeholder="Enter your Gemini API key"
+              id="awsAccessKey"
+              value={awsAccessKey}
+              onChange={(e) => setAwsAccessKey(e.target.value)}
+              placeholder="Enter your AWS Access Key ID"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="awsSecretKey" className="block text-sm font-medium text-gray-700 mb-2">
+              AWS Secret Access Key
+            </label>
+            <input
+              type="password"
+              id="awsSecretKey"
+              value={awsSecretKey}
+              onChange={(e) => setAwsSecretKey(e.target.value)}
+              placeholder="Enter your AWS Secret Access Key"
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Get your API key from{' '}
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                Google AI Studio
+              Create your AWS credentials in the{' '}
+              <a href="https://console.aws.amazon.com/iam/home#/security_credentials" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                AWS Console
               </a>
             </p>
           </div>
@@ -87,7 +101,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onAPIKeysSet }) => {
 
           <button
             type="submit"
-            disabled={!geminiKey.trim() || !perplexityKey.trim()}
+            disabled={!awsAccessKey.trim() || !awsSecretKey.trim() || !perplexityKey.trim()}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
           >
             <Zap className="w-5 h-5" />
@@ -99,7 +113,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onAPIKeysSet }) => {
           <h3 className="font-medium text-blue-900 mb-2">Security Note</h3>
           <p className="text-sm text-blue-800">
             Your API keys are stored locally in your browser and are never sent to our servers. 
-            They are only used to communicate directly with Google Gemini and Perplexity AI services.
+            They are only used to communicate directly with Amazon Bedrock and Perplexity AI services.
           </p>
         </div>
       </div>

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, FileText, Play, Search, CheckCircle, Square } from 'lucide-react';
 import { BookChapter, SubChapter } from '../types';
-import { generateChapterOutline, generateContent } from '../services/geminiService';
+import { generateChapterOutline, generateContent } from '../services/bedrockService';
 import { researchAndGenerate } from '../services/contentService';
 
 interface ChapterViewProps {
   chapter: BookChapter;
   onBack: () => void;
   onUpdateChapter: (chapter: BookChapter) => void;
-  apiKeys: {gemini: string; perplexity: string};
+  apiKeys: {perplexity: string};
+  region?: string;
   isCancelled: boolean;
   onCancel: () => void;
   onResume: () => void;
@@ -19,6 +20,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({
   onBack, 
   onUpdateChapter,
   apiKeys,
+  region,
   isCancelled,
   onCancel,
   onResume 
@@ -39,7 +41,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({
   const generateOutline = async () => {
     setIsGeneratingOutline(true);
     try {
-      const outline = await generateChapterOutline(localChapter.title, localChapter.description, apiKeys.gemini);
+      const outline = await generateChapterOutline(localChapter.title, localChapter.description, region || 'us-east-1');
       const updatedChapter = { ...localChapter, subChapters: outline };
       setLocalChapter(updatedChapter);
       onUpdateChapter(updatedChapter);
@@ -66,9 +68,9 @@ const ChapterView: React.FC<ChapterViewProps> = ({
       let content: string;
       
       if (withResearch) {
-        content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, () => isCancelled);
+        content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, region || 'us-east-1', () => isCancelled);
       } else {
-        content = await generateContent(subChapter.title, subChapter.description, apiKeys.gemini, () => isCancelled);
+        content = await generateContent(subChapter.title, subChapter.description, region || 'us-east-1', () => isCancelled);
       }
 
       // Check if cancelled during generation

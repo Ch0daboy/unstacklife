@@ -31,9 +31,10 @@ function App() {
   }, []);
 
   const apiKeys = {
-    gemini: import.meta.env.VITE_GEMINI_API_KEY || '',
     perplexity: import.meta.env.VITE_PERPLEXITY_API_KEY || ''
   };
+  
+  const region = 'us-east-1'; // Default AWS region
 
   const handleBookGenerated = (generatedBook: Book) => {
     saveBookToDatabase(generatedBook);
@@ -180,7 +181,7 @@ function App() {
               {currentStep === 'prompt' && (
                 <BookPrompt 
                   onBookGenerated={handleBookGenerated}
-                  apiKeys={apiKeys}
+                  region={region}
                 />
               )}
 
@@ -194,6 +195,7 @@ function App() {
                     saveBookToDatabase(updatedBook);
                   }}
                   apiKeys={apiKeys}
+                  region={region}
                   isCancelled={isCancelled}
                   onCancel={() => setIsCancelled(true)}
                   onResume={() => setIsCancelled(false)}
@@ -206,6 +208,7 @@ function App() {
                   onBack={handleBackToOutline}
                   onUpdateChapter={handleUpdateChapter}
                   apiKeys={apiKeys}
+                  region={region}
                   isCancelled={isCancelled}
                   onCancel={() => setIsCancelled(true)}
                   onResume={() => setIsCancelled(false)}

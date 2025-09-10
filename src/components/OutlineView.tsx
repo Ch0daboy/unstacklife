@@ -11,7 +11,8 @@ interface OutlineViewProps {
   onChapterClick: (chapter: BookChapter) => void;
   onNewBook: () => void;
   onUpdateBook: (book: Book) => void;
-  apiKeys: {gemini: string; perplexity: string};
+  apiKeys: {perplexity: string};
+  region?: string;
   isCancelled: boolean;
   onCancel: () => void;
   onResume: () => void;
@@ -23,6 +24,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   onNewBook, 
   onUpdateBook, 
   apiKeys,
+  region,
   isCancelled,
   onCancel,
   onResume 
@@ -53,11 +55,11 @@ const OutlineView: React.FC<OutlineViewProps> = ({
       let updatedBook = { ...book };
       
       if (withResearch) {
-        updatedBook = await generateAllContentWithResearch(updatedBook, apiKeys, (progress) => {
+        updatedBook = await generateAllContentWithResearch(updatedBook, apiKeys, region || 'us-east-1', (progress) => {
           onUpdateBook(progress);
         }, () => isCancelled);
       } else {
-        updatedBook = await generateAllContent(updatedBook, apiKeys.gemini, (progress) => {
+        updatedBook = await generateAllContent(updatedBook, region || 'us-east-1', (progress) => {
           onUpdateBook(progress);
         }, () => isCancelled);
       }
@@ -83,7 +85,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({
       const convertedBook = await convertRomanceHeatLevel(
         book, 
         selectedNewHeatLevel, 
-        apiKeys, 
+        region || 'us-east-1',
         (progress) => {
           // You might want to show this as a separate book or update in place
           console.log('Conversion progress:', progress);
