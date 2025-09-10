@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, Sparkles, Wand2 } from 'lucide-react';
-import { generateBookOutline } from '../services/bedrockService';
+import { generateBookOutline, generateContent } from '../services/bedrockService';
 import { Book } from '../types';
 import { getUserProfile } from '../services/userService';
 
@@ -187,33 +187,12 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, region }) => {
       
       descriptionPrompt += `. The description should be 2-3 sentences that outline what the book will cover, its main themes, and what readers can expect to learn or experience. Make it engaging and specific to the genre and settings provided.`;
 
-      // Use the same Gemini API call structure from generateBookOutline
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKeys.gemini}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: descriptionPrompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 1,
-            topP: 1,
-            maxOutputTokens: 2048,
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const generatedDescription = data.candidates[0]?.content?.parts[0]?.text || '';
+      // Use Bedrock service to generate description
+      const generatedDescription = await generateContent(
+        'Book Description Generation',
+        descriptionPrompt,
+        region || 'us-east-1'
+      );
       setPrompt(generatedDescription.trim());
     } catch (error) {
       console.error('Error generating description:', error);
