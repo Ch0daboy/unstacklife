@@ -22,6 +22,7 @@ VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_AWS_ACCESS_KEY_ID=your_aws_access_key_id
 VITE_AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+VITE_AWS_REGION=us-west-2
 VITE_PERPLEXITY_API_KEY=your_perplexity_api_key
 ```
 
