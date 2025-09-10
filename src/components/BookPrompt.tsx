@@ -191,7 +191,7 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, region }) => {
       const generatedDescription = await generateContent(
         'Book Description Generation',
         descriptionPrompt,
-        region || 'us-west-2'
+        region || 'us-east-1'
       );
       setPrompt(generatedDescription.trim());
     } catch (error) {
@@ -208,7 +208,7 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, region }) => {
 
     setIsGenerating(true);
     try {
-      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, region || 'us-west-2');
+      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, region || 'us-east-1');
       onBookGenerated(book);
     } catch (error) {
       console.error('Error generating book outline:', error);

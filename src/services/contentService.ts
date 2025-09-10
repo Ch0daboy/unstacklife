@@ -7,7 +7,7 @@ export const researchAndGenerate = async (
   title: string,
   description: string,
   apiKeys: {perplexity: string},
-  region: string = 'us-west-2',
+  region: string = 'us-east-1',
   isCancelledFn?: () => boolean
 ): Promise<string> => {
   // Check if cancelled before starting research
@@ -36,7 +36,7 @@ Use the above research to create comprehensive, well-informed content.`;
 
 export const generateAllContent = async (
   book: Book,
-  region: string = 'us-west-2',
+  region: string = 'us-east-1',
   onProgress: (book: Book) => void,
   isCancelledFn?: () => boolean
 ): Promise<Book> => {
@@ -93,7 +93,7 @@ export const generateAllContent = async (
 export const generateAllContentWithResearch = async (
   book: Book,
   apiKeys: {perplexity: string},
-  region: string = 'us-west-2',
+  region: string = 'us-east-1',
   onProgress: (book: Book) => void,
   isCancelledFn?: () => boolean
 ): Promise<Book> => {
@@ -150,7 +150,7 @@ export const generateAllContentWithResearch = async (
 export const convertRomanceHeatLevel = async (
   originalBook: Book,
   newHeatLevel: string,
-  region: string = 'us-west-2',
+  region: string = 'us-east-1',
   onProgress: (book: Book) => void
 ): Promise<Book> => {
   // Create a new book with updated heat level

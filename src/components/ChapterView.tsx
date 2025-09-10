@@ -41,7 +41,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({
   const generateOutline = async () => {
     setIsGeneratingOutline(true);
     try {
-      const outline = await generateChapterOutline(localChapter.title, localChapter.description, region || 'us-west-2');
+      const outline = await generateChapterOutline(localChapter.title, localChapter.description, region || 'us-east-1');
       const updatedChapter = { ...localChapter, subChapters: outline };
       setLocalChapter(updatedChapter);
       onUpdateChapter(updatedChapter);
@@ -68,9 +68,9 @@ const ChapterView: React.FC<ChapterViewProps> = ({
       let content: string;
       
       if (withResearch) {
-        content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, region || 'us-west-2', () => isCancelled);
+        content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, region || 'us-east-1', () => isCancelled);
       } else {
-        content = await generateContent(subChapter.title, subChapter.description, region || 'us-west-2', () => isCancelled);
+        content = await generateContent(subChapter.title, subChapter.description, region || 'us-east-1', () => isCancelled);
       }
 
       // Check if cancelled during generation

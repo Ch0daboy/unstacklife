@@ -3,7 +3,7 @@ import { Book, BookChapter, SubChapter } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initialize Bedrock client
-const createBedrockClient = (region: string = 'us-west-2') => {
+const createBedrockClient = (region: string = 'us-east-1') => {
   return new BedrockRuntimeClient({
     region,
     credentials: {
@@ -28,7 +28,7 @@ interface TitanImageResponse {
 
 const callClaudeModel = async (
   prompt: string, 
-  region: string = 'us-west-2',
+  region: string = 'us-east-1',
   isCancelledFn?: () => boolean
 ): Promise<string> => {
   const maxRetries = 3;
@@ -95,7 +95,7 @@ const callClaudeModel = async (
 
 const generateImage = async (
   prompt: string,
-  region: string = 'us-west-2'
+  region: string = 'us-east-1'
 ): Promise<string> => {
   try {
     const client = createBedrockClient(region);
@@ -154,7 +154,7 @@ export const generateBookOutline = async (
   heatLevel: string,
   perspective: string,
   author: string,
-  region: string = 'us-west-2'
+  region: string = 'us-east-1'
 ): Promise<Book> => {
   let heatLevelPrompt = '';
   if (genre.toLowerCase() === 'romance' && heatLevel) {
@@ -265,7 +265,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
 export const generateChapterOutline = async (
   chapterTitle: string,
   chapterDescription: string,
-  region: string = 'us-west-2'
+  region: string = 'us-east-1'
 ): Promise<SubChapter[]> => {
   const prompt = `
 Create a detailed outline for the following chapter:
@@ -320,7 +320,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
 export const generateContent = async (
   sectionTitle: string,
   sectionDescription: string,
-  region: string = 'us-west-2',
+  region: string = 'us-east-1',
   isCancelledFn?: () => boolean
 ): Promise<string> => {
   const prompt = `
@@ -345,7 +345,7 @@ export const generateContentWithHeatLevel = async (
   sectionDescription: string,
   heatLevel: string,
   perspective: string = '',
-  region: string = 'us-west-2'
+  region: string = 'us-east-1'
 ): Promise<string> => {
   const heatLevelDescriptions = {
     'clean': 'Clean/Wholesome romance with no explicit sexual content, focusing on emotional connection, meaningful glances, hugs, and light kissing.',
@@ -395,7 +395,7 @@ export const generateBookCoverImage = async (
   title: string,
   genre: string,
   description: string,
-  region: string = 'us-west-2'
+  region: string = 'us-east-1'
 ): Promise<string> => {
   const prompt = `Create a professional book cover image for a ${genre} book titled "${title}". ${description}. The cover should be visually appealing, genre-appropriate, and suitable for an ebook. Include the title text in an attractive font that complements the design. The style should be modern and marketable.`;
   
@@ -406,7 +406,7 @@ export const generateChapterImage = async (
   chapterTitle: string,
   chapterDescription: string,
   genre: string,
-  region: string = 'us-west-2'
+  region: string = 'us-east-1'
 ): Promise<string> => {
   const prompt = `Create an atmospheric illustration for a ${genre} book chapter titled "${chapterTitle}". ${chapterDescription}. The image should capture the mood and theme of this chapter, be visually engaging, and complement the narrative. Style should be artistic and book-appropriate.`;
   

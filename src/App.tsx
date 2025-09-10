@@ -37,7 +37,7 @@ function App() {
     perplexity: import.meta.env.VITE_PERPLEXITY_API_KEY || ''
   };
   
-  const region = import.meta.env.VITE_AWS_REGION || 'us-west-2'; // AWS region from env or default
+  const region = import.meta.env.VITE_AWS_REGION || 'us-east-1'; // AWS region from env or default
 
   const handleBookGenerated = (generatedBook: Book) => {
     saveBookToDatabase(generatedBook);

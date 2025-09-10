@@ -59,11 +59,11 @@ const OutlineView: React.FC<OutlineViewProps> = ({
       let updatedBook = { ...book };
       
       if (withResearch) {
-        updatedBook = await generateAllContentWithResearch(updatedBook, apiKeys, region || 'us-west-2', (progress) => {
+        updatedBook = await generateAllContentWithResearch(updatedBook, apiKeys, region || 'us-east-1', (progress) => {
           onUpdateBook(progress);
         }, () => isCancelled);
       } else {
-        updatedBook = await generateAllContent(updatedBook, region || 'us-west-2', (progress) => {
+        updatedBook = await generateAllContent(updatedBook, region || 'us-east-1', (progress) => {
           onUpdateBook(progress);
         }, () => isCancelled);
       }
@@ -89,7 +89,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({
       const convertedBook = await convertRomanceHeatLevel(
         book, 
         selectedNewHeatLevel, 
-        region || 'us-west-2',
+        region || 'us-east-1',
         (progress) => {
           // You might want to show this as a separate book or update in place
           console.log('Conversion progress:', progress);
