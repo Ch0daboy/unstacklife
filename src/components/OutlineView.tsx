@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3, Volume2, Square } from 'lucide-react';
 import { Book, BookChapter, AudiobookData } from '../types';
-import { generateAllContent, generateAllContentWithResearch, convertRomanceHeatLevel } from '../services/contentService';
+import { 
+  generateAllContent, 
+  generateAllContentWithResearch, 
+  convertRomanceHeatLevel 
+} from '../services/contentService';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
 import { generateBookCover, generateBookCoverWithDALLE } from '../services/coverService';
 import AudiobookGenerator from './AudiobookGenerator';

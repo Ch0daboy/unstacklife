@@ -17,6 +17,7 @@ BookGen is a React/TypeScript web application that generates AI-powered books an
 ### Environment Setup
 Create a `.env` file with:
 ```env
+# Supabase Configuration
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_AWS_ACCESS_KEY_ID=your_aws_access_key_id
@@ -45,7 +46,7 @@ src/
 │   ├── BookSidebar.tsx     # Navigation sidebar
 │   ├── AudiobookGenerator.tsx # TTS audiobook generation
 │   └── [others]
-├── services/          # Business logic services (9 files)
+├── services/          # Business logic services (12+ files)
 │   ├── bookService.ts      # Supabase book CRUD operations
 │   ├── contentService.ts   # AI content generation logic
 │   ├── bedrockService.ts    # Amazon Bedrock API integration
@@ -83,7 +84,8 @@ Core types defined in `src/types/index.ts`:
 - Protected routes require authenticated users
 
 ### AI Integration
-- **Gemini API** - Primary content generation service
+- **Amazon Bedrock** - Primary content generation service with Claude 3.5 Sonnet
+- **Gemini API** - Fallback content generation service
 - **Perplexity API** - Research and fact-checking
 - **Web Speech API** - Browser-native TTS for audiobooks
 - Content generation supports multiple genres, tones, perspectives

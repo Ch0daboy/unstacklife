@@ -16,7 +16,7 @@ export const researchAndGenerate = async (
   }
 
   // First, research the topic
-  const researchData = await researchTopic(title, description, apiKeys.perplexity);
+  const researchData = await researchTopic(title, description, apiKeys.perplexity!);
   
   // Check if cancelled after research
   if (isCancelledFn && isCancelledFn()) {
