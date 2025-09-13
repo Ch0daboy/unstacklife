@@ -75,6 +75,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 export const config = {
-  runtime: 'nodejs18.x',
+  runtime: 'nodejs',
 };
-
