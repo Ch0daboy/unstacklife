@@ -13,7 +13,6 @@ export const saveBook = async (book: Book): Promise<Book> => {
       id: book.id,
       user_id: user.id,
       title: book.title,
-      author: book.author,
       description: book.description,
       genre: book.genre,
       sub_genre: book.subGenre,
@@ -34,7 +33,6 @@ export const saveBook = async (book: Book): Promise<Book> => {
       id: book.id,
       user_id: user.id,
       title: book.title,
-      author: book.author,
       description: book.description,
       genre: book.genre,
       sub_genre: book.subGenre,
@@ -160,7 +158,7 @@ export const loadBook = async (bookId: string): Promise<Book | null> => {
   return {
     id: bookData.id,
     title: bookData.title,
-    author: bookData.author,
+    author: undefined,
     description: bookData.description || '',
     genre: bookData.genre || '',
     subGenre: bookData.sub_genre,
@@ -226,7 +224,7 @@ export const loadAllBooks = async (): Promise<Book[]> => {
     return {
       id: bookData.id,
       title: bookData.title,
-      author: bookData.author,
+      author: undefined,
       description: bookData.description || '',
       genre: bookData.genre || '',
       subGenre: bookData.sub_genre,
