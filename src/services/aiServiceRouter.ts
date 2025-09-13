@@ -8,7 +8,7 @@ const isBrowser = typeof window !== 'undefined';
 
 /**
  * AI Service Router - Routes calls to appropriate AI service based on configuration
- * Priority: Local AI > Bedrock > Gemini (fallback)
+ * Priority: Bedrock > Gemini (fallback) > Local (dev)
  */
 
 export interface AICredentials {
@@ -17,6 +17,7 @@ export interface AICredentials {
     accessKeyId: string;
     secretAccessKey: string;
     region?: string;
+    modelId?: string;
   };
   // Gemini (fallback)
   gemini?: string;
@@ -247,12 +248,12 @@ export const generateAllContent = async (
       // Fall back to external API if local services fail (e.g., in browser environment)
       console.warn('Local AI services not available, falling back to external API:', error);
       const { generateAllContent: externalGenerateAllContent } = await import('./contentService');
-      return await externalGenerateAllContent(book, apiKeys.gemini, onProgress, isCancelledFn);
+      return await externalGenerateAllContent(book, apiKeys.bedrock || apiKeys.region || 'us-west-2', onProgress, isCancelledFn);
     }
   } else {
     // Use external API services
     const { generateAllContent: externalGenerateAllContent } = await import('./contentService');
-    return await externalGenerateAllContent(book, apiKeys.gemini, onProgress, isCancelledFn);
+    return await externalGenerateAllContent(book, apiKeys.bedrock || apiKeys.region || 'us-west-2', onProgress, isCancelledFn);
   }
 };
 
@@ -272,12 +273,12 @@ export const generateAllContentWithResearch = async (
       // Fall back to external API if local services fail (e.g., in browser environment)
       console.warn('Local AI services not available, falling back to external API:', error);
       const { generateAllContentWithResearch: externalGenerateAllContentWithResearch } = await import('./contentService');
-      return await externalGenerateAllContentWithResearch(book, apiKeys, onProgress, isCancelledFn);
+      return await externalGenerateAllContentWithResearch(book, apiKeys.bedrock || apiKeys.region || 'us-west-2', onProgress, isCancelledFn);
     }
   } else {
     // Use external API services
     const { generateAllContentWithResearch: externalGenerateAllContentWithResearch } = await import('./contentService');
-    return await externalGenerateAllContentWithResearch(book, apiKeys, onProgress, isCancelledFn);
+    return await externalGenerateAllContentWithResearch(book, apiKeys.bedrock || apiKeys.region || 'us-west-2', onProgress, isCancelledFn);
   }
 };
 
@@ -298,11 +299,11 @@ export const convertRomanceHeatLevel = async (
       // Fall back to external API if local services fail (e.g., in browser environment)
       console.warn('Local AI services not available, falling back to external API:', error);
       const { convertRomanceHeatLevel: externalConvertRomanceHeatLevel } = await import('./contentService');
-      return await externalConvertRomanceHeatLevel(originalBook, newHeatLevel, apiKeys, onProgress, isCancelledFn);
+      return await externalConvertRomanceHeatLevel(originalBook, newHeatLevel, apiKeys.bedrock || apiKeys.region || 'us-west-2', onProgress, isCancelledFn);
     }
   } else {
     // Use external API services
     const { convertRomanceHeatLevel: externalConvertRomanceHeatLevel } = await import('./contentService');
-    return await externalConvertRomanceHeatLevel(originalBook, newHeatLevel, apiKeys, onProgress, isCancelledFn);
+    return await externalConvertRomanceHeatLevel(originalBook, newHeatLevel, apiKeys.bedrock || apiKeys.region || 'us-west-2', onProgress, isCancelledFn);
   }
 };

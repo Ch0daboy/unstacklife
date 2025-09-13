@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { BookOpen, Sparkles, Wand2 } from 'lucide-react';
-import { generateBookOutline, generateContent } from '../services/bedrockService';
+import { generateBookOutline as generateBookOutlineRouted, generateContent as generateContentRouted } from '../services/aiServiceRouter';
 import { Book } from '../types';
 import { getUserProfile } from '../services/userService';
 
 interface BookPromptProps {
   onBookGenerated: (book: Book) => void;
+  apiKeys?: any;
   region?: string;
 }
 
@@ -57,7 +58,7 @@ const HEAT_LEVELS = [
   }
 ];
 
-const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, region }) => {
+const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys, region }) => {
   const [prompt, setPrompt] = useState('');
   const [author, setAuthor] = useState('');
   const [genre, setGenre] = useState('');
@@ -187,11 +188,12 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, region }) => {
       
       descriptionPrompt += `. The description should be 2-3 sentences that outline what the book will cover, its main themes, and what readers can expect to learn or experience. Make it engaging and specific to the genre and settings provided.`;
 
-      // Use Bedrock service to generate description
-      const generatedDescription = await generateContent(
+      // Route via AI service router (uses Bedrock primary)
+      const { result: generatedDescription } = await generateContentRouted(
         'Book Description Generation',
         descriptionPrompt,
-        region || 'us-east-1'
+        apiKeys,
+        () => false
       );
       setPrompt(generatedDescription.trim());
     } catch (error) {
@@ -208,7 +210,7 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, region }) => {
 
     setIsGenerating(true);
     try {
-      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, region || 'us-east-1');
+      const { result: book } = await generateBookOutlineRouted(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, apiKeys);
       onBookGenerated(book);
     } catch (error) {
       console.error('Error generating book outline:', error);

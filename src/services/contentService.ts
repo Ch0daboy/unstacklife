@@ -3,11 +3,19 @@ import { generateChapterOutline, generateContent, generateContentWithHeatLevel }
 import { researchTopic } from './perplexityService';
 import { v4 as uuidv4 } from 'uuid';
 
+// Reuse the BedrockCredentials shape from bedrockService
+type BedrockCredentials = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+  region?: string;
+};
+
 export const researchAndGenerate = async (
   title: string,
   description: string,
   apiKeys: {perplexity: string},
-  region: string = 'us-east-1',
+  regionOrCreds: string | BedrockCredentials = 'us-west-2',
   isCancelledFn?: () => boolean
 ): Promise<string> => {
   // Check if cancelled before starting research
@@ -31,12 +39,12 @@ ${researchData}
 
 Use the above research to create comprehensive, well-informed content.`;
   
-  return await generateContent(title, enhancedDescription, region, isCancelledFn);
+  return await generateContent(title, enhancedDescription, regionOrCreds, isCancelledFn);
 };
 
 export const generateAllContent = async (
   book: Book,
-  region: string = 'us-east-1',
+  regionOrCreds: string | BedrockCredentials = 'us-west-2',
   onProgress: (book: Book) => void,
   isCancelledFn?: () => boolean
 ): Promise<Book> => {
@@ -52,7 +60,7 @@ export const generateAllContent = async (
     
     // Generate chapter outline if not exists
     if (!chapter.subChapters) {
-      const outline = await generateChapterOutline(chapter.title, chapter.description, region);
+      const outline = await generateChapterOutline(chapter.title, chapter.description, regionOrCreds);
       chapter.subChapters = outline;
       onProgress({ ...updatedBook });
     }
@@ -72,7 +80,7 @@ export const generateAllContent = async (
         onProgress({ ...updatedBook });
         
         // Generate content
-        const content = await generateContent(subChapter.title, subChapter.description, region, isCancelledFn);
+        const content = await generateContent(subChapter.title, subChapter.description, regionOrCreds, isCancelledFn);
         subChapter.content = content;
         subChapter.status = 'completed';
         
@@ -93,7 +101,7 @@ export const generateAllContent = async (
 export const generateAllContentWithResearch = async (
   book: Book,
   apiKeys: {perplexity: string},
-  region: string = 'us-east-1',
+  regionOrCreds: string | BedrockCredentials = 'us-west-2',
   onProgress: (book: Book) => void,
   isCancelledFn?: () => boolean
 ): Promise<Book> => {
@@ -109,7 +117,7 @@ export const generateAllContentWithResearch = async (
     
     // Generate chapter outline if not exists
     if (!chapter.subChapters) {
-      const outline = await generateChapterOutline(chapter.title, chapter.description, region);
+      const outline = await generateChapterOutline(chapter.title, chapter.description, regionOrCreds);
       chapter.subChapters = outline;
       onProgress({ ...updatedBook });
     }
@@ -129,7 +137,7 @@ export const generateAllContentWithResearch = async (
         onProgress({ ...updatedBook });
         
         // Research and generate content
-        const content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, region, isCancelledFn);
+        const content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, regionOrCreds, isCancelledFn);
         subChapter.content = content;
         subChapter.status = 'completed';
         
@@ -150,7 +158,7 @@ export const generateAllContentWithResearch = async (
 export const convertRomanceHeatLevel = async (
   originalBook: Book,
   newHeatLevel: string,
-  region: string = 'us-east-1',
+  regionOrCreds: string | BedrockCredentials = 'us-west-2',
   onProgress: (book: Book) => void
 ): Promise<Book> => {
   // Create a new book with updated heat level
@@ -205,7 +213,7 @@ export const convertRomanceHeatLevel = async (
           subChapter.description, 
           newHeatLevel,
           originalBook.perspective || '',
-          region
+          regionOrCreds
         );
         
         subChapter.content = content;

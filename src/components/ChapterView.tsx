@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, FileText, Play, Search, CheckCircle, Square } from 'lucide-react';
 import { BookChapter, SubChapter } from '../types';
-import { generateChapterOutline, generateContent } from '../services/bedrockService';
+import { generateChapterOutline as generateChapterOutlineRouted, generateContent as generateContentRouted } from '../services/aiServiceRouter';
 import { researchAndGenerate } from '../services/contentService';
 
 interface ChapterViewProps {
   chapter: BookChapter;
   onBack: () => void;
   onUpdateChapter: (chapter: BookChapter) => void;
-  apiKeys: {perplexity: string};
+  apiKeys: any;
   region?: string;
   isCancelled: boolean;
   onCancel: () => void;
@@ -41,7 +41,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({
   const generateOutline = async () => {
     setIsGeneratingOutline(true);
     try {
-      const outline = await generateChapterOutline(localChapter.title, localChapter.description, region || 'us-east-1');
+      const { result: outline } = await generateChapterOutlineRouted(localChapter.title, localChapter.description, apiKeys);
       const updatedChapter = { ...localChapter, subChapters: outline };
       setLocalChapter(updatedChapter);
       onUpdateChapter(updatedChapter);
@@ -68,9 +68,9 @@ const ChapterView: React.FC<ChapterViewProps> = ({
       let content: string;
       
       if (withResearch) {
-        content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, region || 'us-east-1', () => isCancelled);
+        content = await researchAndGenerate(subChapter.title, subChapter.description, apiKeys, region || 'us-west-2', () => isCancelled);
       } else {
-        content = await generateContent(subChapter.title, subChapter.description, region || 'us-east-1', () => isCancelled);
+        ({ result: content } = await generateContentRouted(subChapter.title, subChapter.description, apiKeys, () => isCancelled));
       }
 
       // Check if cancelled during generation

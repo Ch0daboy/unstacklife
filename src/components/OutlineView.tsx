@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3, Volume2, Square } from 'lucide-react';
 import { Book, BookChapter, AudiobookData } from '../types';
 import { 
-  generateAllContent, 
-  generateAllContentWithResearch, 
-  convertRomanceHeatLevel 
-} from '../services/contentService';
+  generateAllContent as generateAllContentRouted, 
+  generateAllContentWithResearch as generateAllContentWithResearchRouted, 
+  convertRomanceHeatLevel as convertRomanceHeatLevelRouted 
+} from '../services/aiServiceRouter';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
 import { generateBookCover, generateBookCoverWithDALLE } from '../services/coverService';
 import AudiobookGenerator from './AudiobookGenerator';
@@ -59,11 +59,11 @@ const OutlineView: React.FC<OutlineViewProps> = ({
       let updatedBook = { ...book };
       
       if (withResearch) {
-        updatedBook = await generateAllContentWithResearch(updatedBook, apiKeys, region || 'us-east-1', (progress) => {
+        updatedBook = await generateAllContentWithResearchRouted(updatedBook, apiKeys, (progress) => {
           onUpdateBook(progress);
         }, () => isCancelled);
       } else {
-        updatedBook = await generateAllContent(updatedBook, region || 'us-east-1', (progress) => {
+        updatedBook = await generateAllContentRouted(updatedBook, apiKeys, (progress) => {
           onUpdateBook(progress);
         }, () => isCancelled);
       }
@@ -86,10 +86,10 @@ const OutlineView: React.FC<OutlineViewProps> = ({
     
     setIsConverting(true);
     try {
-      const convertedBook = await convertRomanceHeatLevel(
+      const convertedBook = await convertRomanceHeatLevelRouted(
         book, 
         selectedNewHeatLevel, 
-        region || 'us-east-1',
+        apiKeys,
         (progress) => {
           // You might want to show this as a separate book or update in place
           console.log('Conversion progress:', progress);

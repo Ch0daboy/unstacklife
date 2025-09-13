@@ -1,15 +1,35 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import { BedrockRuntimeClient, InvokeModelCommand, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import { Book, BookChapter, SubChapter } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-// Initialize Bedrock client
-const createBedrockClient = (region: string = 'us-east-1') => {
+// Types for flexible credentials input
+type BedrockCredentials = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+  region?: string;
+  modelId?: string;
+};
+
+// Initialize Bedrock client (accept region or full credentials)
+const createBedrockClient = (regionOrCreds: string | BedrockCredentials = 'us-west-2') => {
+  const envRegion = (import.meta as any).env?.VITE_AWS_REGION || 'us-west-2';
+  const isString = typeof regionOrCreds === 'string';
+  const region = isString ? (regionOrCreds || envRegion) : (regionOrCreds.region || envRegion);
+
+  const accessKeyId = isString
+    ? ((import.meta as any).env?.VITE_AWS_ACCESS_KEY_ID || '')
+    : regionOrCreds.accessKeyId;
+  const secretAccessKey = isString
+    ? ((import.meta as any).env?.VITE_AWS_SECRET_ACCESS_KEY || '')
+    : regionOrCreds.secretAccessKey;
+  const sessionToken = isString ? ((import.meta as any).env?.VITE_AWS_SESSION_TOKEN || undefined) : regionOrCreds.sessionToken;
+
   return new BedrockRuntimeClient({
     region,
-    credentials: {
-      accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || '',
-      secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || ''
-    }
+    credentials: sessionToken
+      ? { accessKeyId, secretAccessKey, sessionToken }
+      : { accessKeyId, secretAccessKey }
   });
 };
 
@@ -27,78 +47,81 @@ interface TitanImageResponse {
 }
 
 const callClaudeModel = async (
-  prompt: string, 
-  region: string = 'us-east-1',
+  prompt: string,
+  regionOrCreds: string | BedrockCredentials = 'us-west-2',
   isCancelledFn?: () => boolean
 ): Promise<string> => {
   const maxRetries = 3;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    // Check for cancellation before each attempt
     if (isCancelledFn && isCancelledFn()) {
       throw new Error('Generation cancelled');
     }
 
     try {
-      const client = createBedrockClient(region);
-      
-      const input = {
-        modelId: CLAUDE_MODEL_ID,
-        contentType: 'application/json',
-        accept: 'application/json',
-        body: JSON.stringify({
-          prompt: `\n\nHuman: ${prompt}\n\nAssistant:`,
-          max_tokens_to_sample: 4000,
+      const client = createBedrockClient(regionOrCreds);
+
+      // Use Converse API for Claude 3.x models
+      const modelId = (typeof regionOrCreds !== 'string' && (regionOrCreds as BedrockCredentials).modelId)
+        ? (regionOrCreds as BedrockCredentials).modelId!
+        : CLAUDE_MODEL_ID;
+      const converse = new ConverseCommand({
+        modelId,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { text: prompt }
+            ]
+          }
+        ],
+        inferenceConfig: {
+          maxTokens: 4000,
           temperature: 0.7,
-          top_p: 1,
-          stop_sequences: ["\n\nHuman:"]
-        })
-      };
+          topP: 1
+        }
+      });
 
-      const command = new InvokeModelCommand(input);
-      const response = await client.send(command);
-      
-      if (!response.body) {
-        throw new Error('No response body from Bedrock');
+      const response = await client.send(converse);
+      const blocks = response.output?.message?.content || [];
+      const text = blocks
+        .map((b: any) => b?.text)
+        .filter(Boolean)
+        .join('\n')
+        .trim();
+
+      if (!text) {
+        throw new Error('Empty response from Claude');
       }
 
-      const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-      
-      if (!responseBody.completion) {
-        throw new Error('No completion in Bedrock response');
-      }
-      
-      return responseBody.completion.trim();
+      return text;
     } catch (error: any) {
-      // If this was our last attempt, re-throw the error
       if (attempt >= maxRetries) {
         console.error('Error calling Bedrock Claude after all retries:', error);
         throw error;
       }
-      
-      // For throttling errors, wait before retrying
-      if (error.name === 'ThrottlingException') {
+
+      if (error?.name === 'ThrottlingException') {
         const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
         console.log(`Bedrock throttling. Retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries + 1})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
-      
-      // For other errors, throw immediately
+
       console.error('Error calling Bedrock Claude:', error);
       throw error;
     }
   }
-  
+
   throw new Error('Maximum retries exceeded');
 };
 
 const generateImage = async (
   prompt: string,
-  region: string = 'us-east-1'
+  regionOrCreds: string | BedrockCredentials = 'us-west-2'
 ): Promise<string> => {
   try {
-    const client = createBedrockClient(region);
+    const client = createBedrockClient(regionOrCreds);
     
     const input = {
       modelId: TITAN_IMAGE_MODEL_ID,
@@ -147,14 +170,14 @@ const generateImage = async (
 };
 
 export const generateBookOutline = async (
-  prompt: string, 
-  genre: string, 
+  prompt: string,
+  genre: string,
   subGenre: string,
-  targetAudience: string, 
+  targetAudience: string,
   heatLevel: string,
   perspective: string,
   author: string,
-  region: string = 'us-east-1'
+  regionOrCreds: string | BedrockCredentials = 'us-west-2'
 ): Promise<Book> => {
   let heatLevelPrompt = '';
   if (genre.toLowerCase() === 'romance' && heatLevel) {
@@ -218,7 +241,7 @@ ${perspectivePrompt ? ' Maintain consistent narrative perspective throughout all
 IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
 `;
 
-  const response = await callClaudeModel(fullPrompt, region);
+  const response = await callClaudeModel(fullPrompt, regionOrCreds);
   
   try {
     // Clean the response to extract JSON
@@ -265,7 +288,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
 export const generateChapterOutline = async (
   chapterTitle: string,
   chapterDescription: string,
-  region: string = 'us-east-1'
+  regionOrCreds: string | BedrockCredentials = 'us-west-2'
 ): Promise<SubChapter[]> => {
   const prompt = `
 Create a detailed outline for the following chapter:
@@ -288,7 +311,7 @@ Generate 4-8 sections that comprehensively break down this chapter. Each section
 IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
 `;
 
-  const response = await callClaudeModel(prompt, region);
+  const response = await callClaudeModel(prompt, regionOrCreds);
   
   try {
     // Clean the response to extract JSON
@@ -320,7 +343,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
 export const generateContent = async (
   sectionTitle: string,
   sectionDescription: string,
-  region: string = 'us-east-1',
+  regionOrCreds: string | BedrockCredentials = 'us-west-2',
   isCancelledFn?: () => boolean
 ): Promise<string> => {
   const prompt = `
@@ -336,7 +359,7 @@ Requirements:
 Please write the content now:
 `;
 
-  const response = await callClaudeModel(prompt, region, isCancelledFn);
+  const response = await callClaudeModel(prompt, regionOrCreds, isCancelledFn);
   return response.trim();
 };
 
@@ -345,7 +368,7 @@ export const generateContentWithHeatLevel = async (
   sectionDescription: string,
   heatLevel: string,
   perspective: string = '',
-  region: string = 'us-east-1'
+  regionOrCreds: string | BedrockCredentials = 'us-west-2'
 ): Promise<string> => {
   const heatLevelDescriptions = {
     'clean': 'Clean/Wholesome romance with no explicit sexual content, focusing on emotional connection, meaningful glances, hugs, and light kissing.',
@@ -387,7 +410,7 @@ Requirements:
 Please write the content now:
 `;
 
-  const response = await callClaudeModel(prompt, region);
+  const response = await callClaudeModel(prompt, regionOrCreds);
   return response.trim();
 };
 
@@ -395,20 +418,20 @@ export const generateBookCoverImage = async (
   title: string,
   genre: string,
   description: string,
-  region: string = 'us-east-1'
+  regionOrCreds: string | BedrockCredentials = 'us-west-2'
 ): Promise<string> => {
   const prompt = `Create a professional book cover image for a ${genre} book titled "${title}". ${description}. The cover should be visually appealing, genre-appropriate, and suitable for an ebook. Include the title text in an attractive font that complements the design. The style should be modern and marketable.`;
   
-  return await generateImage(prompt, region);
+  return await generateImage(prompt, regionOrCreds);
 };
 
 export const generateChapterImage = async (
   chapterTitle: string,
   chapterDescription: string,
   genre: string,
-  region: string = 'us-east-1'
+  regionOrCreds: string | BedrockCredentials = 'us-west-2'
 ): Promise<string> => {
   const prompt = `Create an atmospheric illustration for a ${genre} book chapter titled "${chapterTitle}". ${chapterDescription}. The image should capture the mood and theme of this chapter, be visually engaging, and complement the narrative. Style should be artistic and book-appropriate.`;
   
-  return await generateImage(prompt, region);
+  return await generateImage(prompt, regionOrCreds);
 };

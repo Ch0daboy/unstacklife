@@ -7,6 +7,7 @@ export interface BedrockCredentials {
   accessKeyId: string;
   secretAccessKey: string;
   region?: string;
+  modelId?: string;
 }
 
 export interface AIConfig {
@@ -57,7 +58,8 @@ const defaultConfig: AIConfig = {
       credentials: {
         accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || '',
         secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || '',
-        region: import.meta.env.VITE_AWS_REGION || 'us-east-1'
+        region: import.meta.env.VITE_AWS_REGION || 'us-west-2',
+        modelId: (import.meta as any).env?.VITE_BEDROCK_MODEL_ID || 'anthropic.claude-3-5-haiku-20241022-v1:0'
       }
     },
     gemini: {
