@@ -34,10 +34,13 @@ const tryBedrock = async <T>(
   operation: () => Promise<T>,
   credentials: AICredentials
 ): Promise<ServiceResult<T>> => {
+  // Avoid Bedrock calls from the browser – use server-side only
+  if (typeof window !== 'undefined') {
+    throw new Error('Bedrock disabled in browser');
+  }
   if (!credentials.bedrock?.accessKeyId || !credentials.bedrock?.secretAccessKey) {
     throw new Error('Bedrock credentials not available');
   }
-  
   const result = await operation();
   return { result, usedService: 'bedrock' };
 };

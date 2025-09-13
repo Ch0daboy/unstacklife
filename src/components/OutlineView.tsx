@@ -7,7 +7,7 @@ import {
   convertRomanceHeatLevel as convertRomanceHeatLevelRouted 
 } from '../services/aiServiceRouter';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
-import { generateBookCoverWithBedrock } from '../services/coverService';
+import { generateBookCoverWithBedrock } from '../services/coverServiceBackend';
 import AudiobookGenerator from './AudiobookGenerator';
 
 interface OutlineViewProps {
@@ -132,7 +132,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   const handleGenerateCover = async () => {
     setIsGeneratingCover(true);
     try {
-      const coverUrl: string = await generateBookCoverWithBedrock(book, apiKeys?.bedrock || region || 'us-west-2');
+      const coverUrl: string = await generateBookCoverWithBedrock(book);
       
       const updatedBook = { ...book, coverUrl };
       onUpdateBook(updatedBook);
