@@ -179,6 +179,17 @@ export const generateBookOutline = async (
   author: string,
   regionOrCreds: string | BedrockCredentials = 'us-west-2'
 ): Promise<Book> => {
+  // In browser, route via backend API to use server-side credentials
+  if (typeof window !== 'undefined') {
+    const resp = await fetch('/api/outline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, genre, subGenre, targetAudience, heatLevel, perspective, author }),
+    });
+    if (!resp.ok) throw new Error('Outline API error: ' + (await resp.text()));
+    const data = await resp.json();
+    return data.book as Book;
+  }
   let heatLevelPrompt = '';
   if (genre.toLowerCase() === 'romance' && heatLevel) {
     const heatLevelDescriptions = {
@@ -290,6 +301,16 @@ export const generateChapterOutline = async (
   chapterDescription: string,
   regionOrCreds: string | BedrockCredentials = 'us-west-2'
 ): Promise<SubChapter[]> => {
+  if (typeof window !== 'undefined') {
+    const resp = await fetch('/api/chapter-outline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chapterTitle, chapterDescription }),
+    });
+    if (!resp.ok) throw new Error('Chapter Outline API error: ' + (await resp.text()));
+    const data = await resp.json();
+    return data.sections as SubChapter[];
+  }
   const prompt = `
 Create a detailed outline for the following chapter:
 
@@ -346,6 +367,16 @@ export const generateContent = async (
   regionOrCreds: string | BedrockCredentials = 'us-west-2',
   isCancelledFn?: () => boolean
 ): Promise<string> => {
+  if (typeof window !== 'undefined') {
+    const resp = await fetch('/api/content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sectionTitle, sectionDescription }),
+    });
+    if (!resp.ok) throw new Error('Content API error: ' + (await resp.text()));
+    const data = await resp.json();
+    return (data.content as string).trim();
+  }
   const prompt = `
 Write comprehensive, high-quality content for the following section:
 
@@ -370,6 +401,16 @@ export const generateContentWithHeatLevel = async (
   perspective: string = '',
   regionOrCreds: string | BedrockCredentials = 'us-west-2'
 ): Promise<string> => {
+  if (typeof window !== 'undefined') {
+    const resp = await fetch('/api/content-heat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sectionTitle, sectionDescription, heatLevel, perspective }),
+    });
+    if (!resp.ok) throw new Error('Content Heat API error: ' + (await resp.text()));
+    const data = await resp.json();
+    return (data.content as string).trim();
+  }
   const heatLevelDescriptions = {
     'clean': 'Clean/Wholesome romance with no explicit sexual content, focusing on emotional connection, meaningful glances, hugs, and light kissing.',
     'sweet': 'Sweet romance with closed-door intimate scenes that are implied rather than explicit, focusing on emotional development.',

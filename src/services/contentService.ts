@@ -23,8 +23,20 @@ export const researchAndGenerate = async (
     throw new Error('Generation cancelled');
   }
 
-  // First, research the topic
-  const researchData = await researchTopic(title, description, apiKeys.perplexity!);
+  // First, research the topic (route via backend in browser to keep keys server-side)
+  let researchData: string;
+  if (typeof window !== 'undefined') {
+    const resp = await fetch('/api/research', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, description }),
+    });
+    if (!resp.ok) throw new Error('Research API error: ' + (await resp.text()));
+    const data = await resp.json();
+    researchData = data.research as string;
+  } else {
+    researchData = await researchTopic(title, description, apiKeys.perplexity!);
+  }
   
   // Check if cancelled after research
   if (isCancelledFn && isCancelledFn()) {

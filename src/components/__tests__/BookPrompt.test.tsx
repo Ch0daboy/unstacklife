@@ -1,6 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import BookPrompt from '@/components/BookPrompt';
 
+vi.mock('@/services/userService', () => ({
+  getUserProfile: vi.fn(async () => null),
+}));
+
 vi.mock('@/services/aiServiceRouter', () => ({
   generateContent: vi.fn(async () => ({ result: 'Generated description.' })),
   generateBookOutline: vi.fn(async () => ({
@@ -35,4 +39,3 @@ describe('BookPrompt', () => {
     });
   });
 });
-

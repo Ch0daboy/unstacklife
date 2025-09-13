@@ -9,10 +9,13 @@ vi.mock('@/services/bedrockService', () => ({
 }));
 
 describe('aiServiceRouter (browser)', () => {
-  it('falls back to Gemini when Bedrock disabled in browser', async () => {
+  it('uses Bedrock via backend in browser', async () => {
+    // Mock bedrock service to simulate backend usage
+    const bedrock = await import('@/services/bedrockService');
+    vi.spyOn(bedrock, 'generateContent').mockResolvedValueOnce('Bedrock content');
+
     const { result, usedService } = await generateContent('t', 'd', {});
-    expect(result).toBe('Gemini content');
-    expect(usedService).toBe('gemini');
+    expect(result).toBe('Bedrock content');
+    expect(usedService).toBe('bedrock');
   });
 });
-
