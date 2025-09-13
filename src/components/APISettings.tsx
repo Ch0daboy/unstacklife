@@ -22,6 +22,17 @@ const APISettings: React.FC<APISettingsProps> = ({ onAPIKeysSet, onClose }) => {
   const [modelId, setModelId] = useState<string>(storedObj?.bedrock?.modelId || DEFAULT_MODEL);
   const [perplexityKey, setPerplexityKey] = useState<string>(storedObj?.perplexity || (import.meta as any).env?.VITE_PERPLEXITY_API_KEY || '');
 
+  const MODEL_PRESETS = [
+    { label: 'Claude 3.5 Sonnet (v2 2024-10-22)', value: 'anthropic.claude-3-5-sonnet-20241022-v2:0' },
+    { label: 'Claude 3.5 Haiku (2024-10-22)', value: 'anthropic.claude-3-5-haiku-20241022-v1:0' },
+    { label: 'Claude 3 Opus (2024-02-29)', value: 'anthropic.claude-3-opus-20240229-v1:0' },
+    { label: 'Custom...', value: '__custom__' }
+  ];
+  const [modelPreset, setModelPreset] = useState<string>(() => {
+    const hit = MODEL_PRESETS.find(m => m.value === (storedObj?.bedrock?.modelId || DEFAULT_MODEL));
+    return hit ? hit.value : '__custom__';
+  });
+
   React.useEffect(() => {
     if (awsAccessKey && awsSecretKey) {
       const payload = {
@@ -127,9 +138,32 @@ const APISettings: React.FC<APISettingsProps> = ({ onAPIKeysSet, onClose }) => {
               </select>
             </div>
             <div>
-              <label htmlFor="modelId" className="block text-sm font-medium text-gray-700 mb-2">Claude Model ID</label>
-              <input type="text" id="modelId" value={modelId} onChange={(e) => setModelId(e.target.value)} placeholder="anthropic.claude-3-5-haiku-20241022-v1:0" className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" />
-              <p className="text-xs text-gray-500 mt-1">Defaults to a fast Claude 3.5 model. You can paste any Bedrock model ID your policy allows.</p>
+              <label htmlFor="modelPreset" className="block text-sm font-medium text-gray-700 mb-2">Claude Model</label>
+              <select
+                id="modelPreset"
+                value={modelPreset}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setModelPreset(v);
+                  if (v !== '__custom__') setModelId(v);
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              >
+                {MODEL_PRESETS.map(p => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+              {modelPreset === '__custom__' && (
+                <input
+                  type="text"
+                  id="modelId"
+                  value={modelId}
+                  onChange={(e) => setModelId(e.target.value)}
+                  placeholder="anthropic.claude-3-5-haiku-20241022-v1:0"
+                  className="mt-2 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                />
+              )}
+              <p className="text-xs text-gray-500 mt-1">Choose a preset or set a custom Bedrock Claude model ID.</p>
             </div>
           </div>
 

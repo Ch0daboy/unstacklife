@@ -1,47 +1,26 @@
 import { Book } from '../types';
+import { generateBookCoverImage } from './bedrockService';
 
-export const generateBookCover = async (book: Book, geminiApiKey: string): Promise<string> => {
-  // Note: This is a placeholder implementation
-  // Gemini doesn't currently support image generation via API
-  // This function returns a placeholder or could be integrated with other image generation services
+// Minimal duplication of credentials type for Bedrock image calls
+type BedrockCredentials = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+  region?: string;
+  modelId?: string;
+};
 
-  console.warn('Gemini image generation not available. Using placeholder implementation.');
-
-  // Create a detailed prompt based on book information for future use
-  let prompt = `Professional book cover design for "${book.title}" by ${book.writingPersona?.authorName || 'Author Name'}, ${book.genre.toLowerCase()} genre`;
-
-  if (book.subGenre) {
-    prompt += `, ${book.subGenre.toLowerCase()} style`;
-  }
-
-  if (book.tone) {
-    prompt += `, ${book.tone.toLowerCase()} tone`;
-  }
-
-  // Add genre-specific visual elements
-  const genrePrompts: {[key: string]: string} = {
-    'romance': 'elegant typography, soft romantic colors, dreamy atmosphere, hearts or roses elements',
-    'fantasy': 'magical elements, mystical colors, dragons or castles, enchanted forest',
-    'science fiction': 'futuristic design, space elements, technological themes, metallic colors',
-    'mystery': 'dark atmospheric design, shadows, mysterious silhouettes, noir style',
-    'thriller': 'bold dramatic design, intense colors, suspenseful elements',
-    'historical fiction': 'vintage design, period-appropriate elements, classic typography',
-    'contemporary fiction': 'modern clean design, realistic elements, contemporary colors',
-    'young adult': 'vibrant colors, youthful design, dynamic typography',
-    'non-fiction': 'professional clean design, informative layout, authoritative look',
-    'self-help': 'inspiring design, motivational colors, uplifting imagery',
-    'business': 'professional corporate design, success imagery, clean typography',
-    'biography': 'portrait-style design, documentary feel, respectful presentation'
-  };
-
-  if (genrePrompts[book.genre.toLowerCase()]) {
-    prompt += `, ${genrePrompts[book.genre.toLowerCase()]}`;
-  }
-
-  prompt += `, high quality, professional book cover design, clean typography with author name clearly visible, marketable design, 4k resolution`;
-
-  // For now, return a placeholder image or throw an error suggesting to use DALL-E
-  throw new Error('Gemini image generation not available. Please use DALL-E option instead.');
+export const generateBookCoverWithBedrock = async (
+  book: Book,
+  regionOrCreds: string | BedrockCredentials = 'us-west-2'
+): Promise<string> => {
+  const base64 = await generateBookCoverImage(
+    book.title,
+    book.genre,
+    book.description || '',
+    regionOrCreds
+  );
+  return `data:image/png;base64,${base64}`;
 };
 
 // Alternative: Generate cover using DALL-E (if user has OpenAI API key)

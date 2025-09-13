@@ -7,7 +7,7 @@ import {
   convertRomanceHeatLevel as convertRomanceHeatLevelRouted 
 } from '../services/aiServiceRouter';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
-import { generateBookCover, generateBookCoverWithDALLE } from '../services/coverService';
+import { generateBookCoverWithBedrock, generateBookCoverWithDALLE } from '../services/coverService';
 import AudiobookGenerator from './AudiobookGenerator';
 
 interface OutlineViewProps {
@@ -15,7 +15,7 @@ interface OutlineViewProps {
   onChapterClick: (chapter: BookChapter) => void;
   onNewBook: () => void;
   onUpdateBook: (book: Book) => void;
-  apiKeys: {perplexity: string};
+  apiKeys: any;
   region?: string;
   isCancelled: boolean;
   onCancel: () => void;
@@ -131,23 +131,16 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   };
 
   const handleGenerateCover = async (useDALLE: boolean = false) => {
-    let apiKey: string;
-
-    if (useDALLE) {
-      // For DALL-E, we still need OpenAI API key
-      const userApiKey = prompt('Enter your OpenAI API key for DALL-E:');
-      if (!userApiKey) return;
-      apiKey = userApiKey;
-    } else {
-      // For Gemini Imagen, use the existing Gemini API key
-      apiKey = apiKeys.gemini;
-    }
-    
     setIsGeneratingCover(true);
     try {
-      const coverUrl = useDALLE 
-        ? await generateBookCoverWithDALLE(book, apiKey)
-        : await generateBookCover(book, apiKey);
+      let coverUrl: string;
+      if (useDALLE) {
+        const userApiKey = prompt('Enter your OpenAI API key for DALL-E:');
+        if (!userApiKey) { setIsGeneratingCover(false); return; }
+        coverUrl = await generateBookCoverWithDALLE(book, userApiKey.trim());
+      } else {
+        coverUrl = await generateBookCoverWithBedrock(book, apiKeys?.bedrock || region || 'us-west-2');
+      }
       
       const updatedBook = { ...book, coverUrl };
       onUpdateBook(updatedBook);
@@ -269,7 +262,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                         className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                       >
                         <Image className="w-4 h-4" />
-                        {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
+                        {isGeneratingCover ? 'Generating...' : 'Bedrock Titan'}
                       </button>
                       <button
                         onClick={() => handleGenerateCover(true)}
@@ -385,7 +378,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                       className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                     >
                       <Image className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
+                      {isGeneratingCover ? 'Generating...' : 'Bedrock Titan'}
                     </button>
                     <button
                       onClick={() => handleGenerateCover(true)}
