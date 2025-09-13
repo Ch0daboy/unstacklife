@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Image, Palette, Edit3, Volume2, Square } from 'lucide-react';
+import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, Heart, Palette, Edit3, Volume2, Square } from 'lucide-react';
 import { Book, BookChapter, AudiobookData } from '../types';
 import { 
   generateAllContent as generateAllContentRouted, 
@@ -7,7 +7,7 @@ import {
   convertRomanceHeatLevel as convertRomanceHeatLevelRouted 
 } from '../services/aiServiceRouter';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
-import { generateBookCoverWithBedrock, generateBookCoverWithDALLE } from '../services/coverService';
+import { generateBookCoverWithBedrock } from '../services/coverService';
 import AudiobookGenerator from './AudiobookGenerator';
 
 interface OutlineViewProps {
@@ -38,7 +38,6 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   const [isConverting, setIsConverting] = useState(false);
   const [showHeatLevelSelector, setShowHeatLevelSelector] = useState(false);
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
-  const [showCoverOptions, setShowCoverOptions] = useState(false);
   const [selectedNewHeatLevel, setSelectedNewHeatLevel] = useState('');
   const [showAudiobookGenerator, setShowAudiobookGenerator] = useState(false);
 
@@ -130,24 +129,16 @@ const OutlineView: React.FC<OutlineViewProps> = ({
     onUpdateBook(updatedBook);
   };
 
-  const handleGenerateCover = async (useDALLE: boolean = false) => {
+  const handleGenerateCover = async () => {
     setIsGeneratingCover(true);
     try {
-      let coverUrl: string;
-      if (useDALLE) {
-        const userApiKey = prompt('Enter your OpenAI API key for DALL-E:');
-        if (!userApiKey) { setIsGeneratingCover(false); return; }
-        coverUrl = await generateBookCoverWithDALLE(book, userApiKey.trim());
-      } else {
-        coverUrl = await generateBookCoverWithBedrock(book, apiKeys?.bedrock || region || 'us-west-2');
-      }
+      const coverUrl: string = await generateBookCoverWithBedrock(book, apiKeys?.bedrock || region || 'us-west-2');
       
       const updatedBook = { ...book, coverUrl };
       onUpdateBook(updatedBook);
-      setShowCoverOptions(false);
     } catch (error) {
       console.error('Error generating cover:', error);
-      alert('Failed to generate cover. Please check your API key and try again.');
+      alert('Failed to generate cover. Please try again.');
     } finally {
       setIsGeneratingCover(false);
     }
@@ -244,43 +235,14 @@ const OutlineView: React.FC<OutlineViewProps> = ({
               
               {/* Cover Generation */}
               <div className="space-y-3">
-                {!showCoverOptions ? (
-                  <button
-                    onClick={() => setShowCoverOptions(true)}
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center gap-2"
-                  >
-                    <Palette className="w-5 h-5" />
-                    {book.coverUrl ? 'Regenerate Cover' : 'Generate Cover'}
-                  </button>
-                ) : (
-                  <div className="bg-purple-50 p-4 rounded-xl space-y-3">
-                    <h4 className="font-medium text-purple-900">Choose Cover Generation Service</h4>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleGenerateCover(false)}
-                        disabled={isGeneratingCover}
-                        className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                      >
-                        <Image className="w-4 h-4" />
-                        {isGeneratingCover ? 'Generating...' : 'Bedrock Titan'}
-                      </button>
-                      <button
-                        onClick={() => handleGenerateCover(true)}
-                        disabled={isGeneratingCover}
-                        className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                      >
-                        <Palette className="w-4 h-4" />
-                        {isGeneratingCover ? 'Generating...' : 'DALL-E'}
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => setShowCoverOptions(false)}
-                      className="w-full px-4 py-2 text-purple-600 hover:text-purple-800 transition-colors duration-200"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
+                <button
+                  onClick={handleGenerateCover}
+                  disabled={isGeneratingCover}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <Palette className="w-5 h-5" />
+                  {isGeneratingCover ? 'Generating...' : (book.coverUrl ? 'Regenerate Cover' : 'Generate Cover')}
+                </button>
               </div>
               
               {isRomanceBook && (
@@ -360,43 +322,14 @@ const OutlineView: React.FC<OutlineViewProps> = ({
           <div className="flex gap-3">
             {/* Cover Generation */}
             <div className="space-y-3">
-              {!showCoverOptions ? (
-                <button
-                  onClick={() => setShowCoverOptions(true)}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <Palette className="w-5 h-5" />
-                  Generate Cover
-                </button>
-              ) : (
-                <div className="bg-purple-50 p-4 rounded-xl space-y-3">
-                  <h4 className="font-medium text-purple-900">Choose Cover Generation Service</h4>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleGenerateCover(false)}
-                      disabled={isGeneratingCover}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                    >
-                      <Image className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'Bedrock Titan'}
-                    </button>
-                    <button
-                      onClick={() => handleGenerateCover(true)}
-                      disabled={isGeneratingCover}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                    >
-                      <Palette className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'DALL-E'}
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => setShowCoverOptions(false)}
-                    className="w-full px-4 py-2 text-purple-600 hover:text-purple-800 transition-colors duration-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={handleGenerateCover}
+                disabled={isGeneratingCover}
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <Palette className="w-5 h-5" />
+                {isGeneratingCover ? 'Generating...' : 'Generate Cover'}
+              </button>
             </div>
             
             <button

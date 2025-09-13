@@ -9,7 +9,6 @@ import OutlineView from './components/OutlineView';
 import ChapterView from './components/ChapterView';
 import BookEditor from './components/BookEditor';
 import AIConfigPanel from './components/AIConfigPanel';
-import APISettings from './components/APISettings';
 import { Book, BookChapter } from './types';
 import { saveBook, loadBook } from './services/bookService';
 import { isLocalAIEnabled, getAICredentials } from './config/aiConfig';
@@ -21,7 +20,6 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
   const [showAIConfig, setShowAIConfig] = useState(false);
-  const [showAPISettings, setShowAPISettings] = useState(false);
   const [apiKeys, setApiKeys] = useState<any>(() => ({
     ...getAICredentials(),
     perplexity: (import.meta as any).env?.VITE_PERPLEXITY_API_KEY || getAICredentials().perplexity || ''
@@ -186,13 +184,6 @@ function App() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowAPISettings(true)}
-                  className="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm text-gray-700"
-                  title="API Keys"
-                >
-                  API Keys
-                </button>
-                <button
                   onClick={() => setShowAIConfig(!showAIConfig)}
                   className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                   title="AI Configuration"
@@ -264,18 +255,7 @@ function App() {
           isOpen={showAIConfig}
           onClose={() => setShowAIConfig(false)}
         />
-
-        {/* API Settings Modal */}
-        {showAPISettings && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <APISettings
-                onAPIKeysSet={(keys) => setApiKeys(keys)}
-                onClose={() => setShowAPISettings(false)}
-              />
-            </div>
-          </div>
-        )}
+        
       </div>
     </AuthWrapper>
   );
